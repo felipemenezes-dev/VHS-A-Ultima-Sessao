@@ -21,6 +21,58 @@ enum Cenario {
     SALA_PROJECAO
 };
 
+static Rectangle CaixaColisaoJohn(Vector2 john, float alturaJohn) {
+    float larguraCaixa = alturaJohn * 0.24f;
+    float alturaCaixa = alturaJohn * 0.12f;
+
+    return (Rectangle) {
+        john.x - larguraCaixa / 2.0f,
+        john.y - alturaCaixa,
+        larguraCaixa,
+        alturaCaixa
+    };
+}
+
+static bool ColideComMascara(
+    Image mascara,
+    Rectangle caixa,
+    float larguraTela,
+    float alturaTela
+) {
+    if (mascara.data == NULL ||
+        larguraTela <= 0.0f ||
+        alturaTela <= 0.0f) {
+        return false;
+    }
+
+    float escalaX = (float)mascara.width / larguraTela;
+    float escalaY = (float)mascara.height / alturaTela;
+
+    int xInicial = (int)floorf(caixa.x * escalaX);
+    int yInicial = (int)floorf(caixa.y * escalaY);
+    int xFinal = (int)ceilf((caixa.x + caixa.width) * escalaX);
+    int yFinal = (int)ceilf((caixa.y + caixa.height) * escalaY);
+
+    if (xInicial < 0 ||
+        yInicial < 0 ||
+        xFinal >= mascara.width ||
+        yFinal >= mascara.height) {
+        return true;
+    }
+
+    for (int y = yInicial; y <= yFinal; y++) {
+        for (int x = xInicial; x <= xFinal; x++) {
+            Color pixel = GetImageColor(mascara, x, y);
+
+            if (pixel.a > 0) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 int main(int argc, char **argv) {
     bool janela = argc > 1 && TextIsEqual(argv[1], "--windowed");
     SetConfigFlags(janela ? FLAG_WINDOW_RESIZABLE : FLAG_FULLSCREEN_MODE);
@@ -58,6 +110,9 @@ int main(int argc, char **argv) {
     Texture2D animacoes[NUM_DIRECOES][NUM_FRAMES] = {0};
     Texture2D johnParado[NUM_DIRECOES] = {0};
 
+    Image mascaraSalao = {0};
+    Texture2D texturaMascaraSalao = {0};
+
     bool erro = false;
 
     for (int i = 0; i < NUM_CENARIOS; i++) {
@@ -69,9 +124,37 @@ int main(int argc, char **argv) {
                 "Nao foi possivel carregar: %s",
                 caminhosCenarios[i]
             );
+
             erro = true;
         } else {
             SetTextureFilter(cenarios[i], TEXTURE_FILTER_POINT);
+        }
+    }
+
+    mascaraSalao = LoadImage("assets/cenarios/colisoes_salao.png");
+
+    if (mascaraSalao.data == NULL) {
+        TraceLog(
+            LOG_ERROR,
+            "Nao foi possivel carregar: assets/cenarios/colisoes_salao.png"
+        );
+
+        erro = true;
+    } else {
+        texturaMascaraSalao = LoadTextureFromImage(mascaraSalao);
+
+        if (texturaMascaraSalao.id == 0) {
+            TraceLog(
+                LOG_ERROR,
+                "Nao foi possivel criar a visualizacao da mascara de colisao"
+            );
+
+            erro = true;
+        } else {
+            SetTextureFilter(
+                texturaMascaraSalao,
+                TEXTURE_FILTER_POINT
+            );
         }
     }
 
@@ -135,6 +218,14 @@ int main(int argc, char **argv) {
             }
         }
 
+        if (texturaMascaraSalao.id != 0) {
+            UnloadTexture(texturaMascaraSalao);
+        }
+
+        if (mascaraSalao.data != NULL) {
+            UnloadImage(mascaraSalao);
+        }
+
         CloseWindow();
         return 1;
     }
@@ -155,6 +246,7 @@ int main(int argc, char **argv) {
 
     float tempoAnimacao = 0.0f;
     float duracaoFrame = 0.11f;
+    bool mostrarColisoes = false;
 
     while (!WindowShouldClose()) {
         float delta = GetFrameTime();
@@ -163,6 +255,7 @@ int main(int argc, char **argv) {
         alturaTela = (float)GetScreenHeight();
 
         float alturaJohn = alturaTela * 0.15f;
+        Vector2 mouse = GetMousePosition();
 
         float movimentoX = 0.0f;
         float movimentoY = 0.0f;
@@ -200,8 +293,35 @@ int main(int argc, char **argv) {
             movimentoX /= comprimento;
             movimentoY /= comprimento;
 
-            john.x += movimentoX * velocidade * delta;
-            john.y += movimentoY * velocidade * delta;
+            float deslocamentoX = movimentoX * velocidade * delta;
+            float deslocamentoY = movimentoY * velocidade * delta;
+
+            if (cenarioAtual == SALAO) {
+                john.x += deslocamentoX;
+
+                if (ColideComMascara(
+                    mascaraSalao,
+                    CaixaColisaoJohn(john, alturaJohn),
+                    larguraTela,
+                    alturaTela
+                )) {
+                    john.x -= deslocamentoX;
+                }
+
+                john.y += deslocamentoY;
+
+                if (ColideComMascara(
+                    mascaraSalao,
+                    CaixaColisaoJohn(john, alturaJohn),
+                    larguraTela,
+                    alturaTela
+                )) {
+                    john.y -= deslocamentoY;
+                }
+            } else {
+                john.x += deslocamentoX;
+                john.y += deslocamentoY;
+            }
 
             tempoAnimacao += delta;
 
@@ -212,6 +332,26 @@ int main(int argc, char **argv) {
         } else {
             frameAtual = 0;
             tempoAnimacao = 0.0f;
+        }
+
+        if (IsKeyPressed(KEY_F1)) {
+            mostrarColisoes = !mostrarColisoes;
+        }
+
+        if (
+            mostrarColisoes &&
+            cenarioAtual == SALAO &&
+            IsMouseButtonPressed(MOUSE_BUTTON_LEFT)
+        ) {
+            printf(
+                "Ponto: X = %.2f%%, Y = %.2f%% | Pixel: %.0f, %.0f\n",
+                mouse.x / larguraTela * 100.0f,
+                mouse.y / alturaTela * 100.0f,
+                mouse.x,
+                mouse.y
+            );
+
+            fflush(stdout);
         }
 
         bool mudouCenario = false;
@@ -238,7 +378,10 @@ int main(int argc, char **argv) {
                 alturaTela * 0.16f
             };
 
-            if (movimentoX < 0.0f && CheckCollisionPointRec(john, portaBanheiro)) {
+            if (
+                movimentoX < 0.0f &&
+                CheckCollisionPointRec(john, portaBanheiro)
+            ) {
                 cenarioAtual = BANHEIRO;
 
                 john.x = larguraTela * 0.855f;
@@ -280,7 +423,10 @@ int main(int argc, char **argv) {
                 alturaTela * 0.25f
             };
 
-            if (movimentoX > 0.0f && CheckCollisionPointRec(john, saidaBanheiro)) {
+            if (
+                movimentoX > 0.0f &&
+                CheckCollisionPointRec(john, saidaBanheiro)
+            ) {
                 cenarioAtual = SALAO;
 
                 john.x = larguraTela * 0.06f;
@@ -301,7 +447,10 @@ int main(int argc, char **argv) {
                     alturaTela * 0.21f
                 };
 
-                if (movimentoY < 0.0f && CheckCollisionPointRec(john, portaProjecao)) {
+                if (
+                    movimentoY < 0.0f &&
+                    CheckCollisionPointRec(john, portaProjecao)
+                ) {
                     cenarioAtual = SALA_PROJECAO;
 
                     john.x = larguraTela * 0.50f;
@@ -399,6 +548,27 @@ int main(int argc, char **argv) {
             WHITE
         );
 
+        if (mostrarColisoes && cenarioAtual == SALAO) {
+            DrawTexturePro(
+                texturaMascaraSalao,
+                (Rectangle) {
+                    0.0f,
+                    0.0f,
+                    (float)texturaMascaraSalao.width,
+                    (float)texturaMascaraSalao.height
+                },
+                (Rectangle) {
+                    0.0f,
+                    0.0f,
+                    larguraTela,
+                    alturaTela
+                },
+                (Vector2) {0.0f, 0.0f},
+                0.0f,
+                (Color){26, 214, 123, 220}
+            );
+        }
+
         DrawTexturePro(
             atual,
             (Rectangle) {
@@ -418,6 +588,51 @@ int main(int argc, char **argv) {
             WHITE
         );
 
+        if (mostrarColisoes && cenarioAtual == SALAO) {
+            Rectangle caixaJohn = CaixaColisaoJohn(john, alturaJohn);
+
+            DrawRectangleRec(
+                caixaJohn,
+                (Color){0, 220, 255, 90}
+            );
+
+            DrawRectangleLinesEx(
+                caixaJohn,
+                2.0f,
+                SKYBLUE
+            );
+
+            char infoMouse[160];
+
+            snprintf(
+                infoMouse,
+                sizeof(infoMouse),
+                "Mouse: X %.2f%% | Y %.2f%%",
+                mouse.x / larguraTela * 100.0f,
+                mouse.y / alturaTela * 100.0f
+            );
+
+            DrawRectangle(10, 10, 490, 62, (Color){0, 0, 0, 190});
+
+            DrawText(
+                infoMouse,
+                20,
+                18,
+                20,
+                YELLOW
+            );
+
+            DrawText(
+                "F1: ocultar colisao | Clique: registrar ponto no terminal",
+                20,
+                44,
+                16,
+                RAYWHITE
+            );
+
+            DrawCircleV(mouse, 5.0f, YELLOW);
+        }
+
         EndDrawing();
     }
 
@@ -432,6 +647,9 @@ int main(int argc, char **argv) {
 
         UnloadTexture(johnParado[d]);
     }
+
+    UnloadTexture(texturaMascaraSalao);
+    UnloadImage(mascaraSalao);
 
     CloseWindow();
     return 0;
