@@ -11,8 +11,8 @@ No terminal Ubuntu, dentro da pasta do repositório:
 ./iniciar.sh
 ```
 
-O script recompila quando o fonte ou o script de compilação são mais novos que
-o executável. Para forçar a compilação:
+O script recompila quando qualquer fonte `.c`, cabeçalho `.h` ou o script de
+compilação é mais novo que o executável. Para forçar a compilação:
 
 ```sh
 ./compilar.sh
@@ -20,8 +20,10 @@ o executável. Para forçar a compilação:
 ```
 
 Para solicitar tela cheia: `./iniciar.sh --fullscreen`.
-WASD ou setas movem John. **Nesta base Esc fecha o jogo**; a pausa prevista nas
-regras será implementada em uma etapa posterior.
+WASD ou setas movem John. **Tab abre e fecha o inventário vazio**; Esc fecha o
+inventário se estiver aberto. Fora dele, Esc ainda encerra o jogo.
+F1 liga/desliga a visualização das colisões. Com F1 ativo, o mouse mostra
+coordenadas e um clique registra o ponto no terminal.
 
 Os scripts entram na pasta correta antes de carregar as imagens. A compilação
 gera `build/vhs`; o executável `vhs` original do repositório é preservado.
@@ -57,8 +59,10 @@ Salão, banheiro, escritório, estoque e projeção têm entradas e saídas.
 A projeção é acessada pelo estoque. John possui 16 quadros de caminhada e quatro
 poses paradas, e as cinco imagens de cenário são carregadas pelo jogo.
 
-Ainda faltam colisões internas, requisitos de chave/fusível, interações,
-inventário, puzzle, perseguição, sobrevivência, menus, cutscenes e finais.
+O salão usa uma máscara alpha de colisão; as outras quatro salas usam
+retângulos. A base mantém inventário visual vazio.
+Ainda faltam preenchimento/coleta/uso de itens, requisitos de chave/fusível, puzzle,
+perseguição, sobrevivência, menus, cutscenes, finais e camadas de profundidade.
 
 ## Verificar a base
 
@@ -67,9 +71,13 @@ inventário, puzzle, perseguição, sobrevivência, menus, cutscenes e finais.
 ```
 
 O teste usa a raylib real e uma janela oculta; precisa do ambiente gráfico do WSL.
-Ele percorre as cinco salas, retorna ao salão, verifica os sprites e decodifica
-todos os PNGs disponíveis. Ele não substitui os testes do jogo completo.
+Ele percorre as cinco salas com colisões, verifica o abre/fecha e a pausa do
+inventário e carrega todos os PNGs disponíveis. Ele não substitui os testes do jogo completo.
 
 - [Regras da primeira versão](docs/REGRAS_DO_JOGO.md)
 - [Base consolidada e resultados dos testes](docs/BASE_TESTADA.md)
 - [Descrição do teste de regressão](tests/README.md)
+
+- [Passo 3, controles e limites desta entrega](docs/PASSO_3.md)
+
+- [Atualização das colisões do salão](docs/ATUALIZACAO_c7b52ea.md)

@@ -1,6 +1,6 @@
 # VHS: A Última Sessão — regras definitivas da primeira versão
 
-Versão 1.1 · 29 de outubro de 2026
+Versão 1.3 · 29 de outubro de 2026
 
 Este documento fecha o passo 2 do desenvolvimento. Ele descreve o comportamento
 que será implementado nas próximas etapas; não afirma que esses sistemas já estão
@@ -325,10 +325,14 @@ Ao fechar o programa, liberar também texturas, fontes e demais recursos.
 | Reiniciar depois de vitória/derrota | Estado inicial integral, sem lista ou eventos antigos |
 | Redimensionar a janela | Não muda velocidade, alcance ou geometria do mundo |
 
-## 14. Limites desta entrega
+## 14. Estado de implementação
 
-O passo 1 atualiza e verifica a base existente. O passo 2 registra as regras acima.
-A navegação pelas cinco salas já faz parte da base integrada. A refatoração,
-a resolução virtual, as colisões, as interações e os demais sistemas serão
-implementados nos passos seguintes. A documentação não deve
-ser interpretada como confirmação de que esses recursos já foram programados.
+Os passos 1 e 2 consolidaram a base e estas regras. A entrega do passo 3 organiza
+o código em módulos, mantém as cinco salas, acrescenta colisões por máscara no salão e retângulos nas outras salas,
+apresentação em coordenadas virtuais e inventário vazio com Tab para abrir/fechar.
+
+Por solicitação explícita, coleta, preenchimento, uso de itens e lista de fitas
+ainda não foram implementados. As regras dessas funcionalidades neste documento
+continuam sendo a referência para as etapas futuras, não recursos já disponíveis.
+Camadas de profundidade, puzzle, inimigo, sobrevivência e demais telas também
+continuam pendentes. Consulte `PASSO_3.md` para os controles e testes atuais.

@@ -1,149 +1,177 @@
-// Regression test of the actual game loop with real raylib and scripted inputs.
-#include "raylib.h"
+#include "game.h"
+#include "world.h"
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
 
-static Texture2D TestLoadTexture(const char *path);
-static bool TestIsKeyDown(int key);
-static float TestGetFrameTime(void);
-static bool TestWindowShouldClose(void);
-static void TestDrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest,
-                              Vector2 origin, float rotation, Color tint);
-static void TestSetTargetFPS(int fps);
-static void TestSetConfigFlags(unsigned int flags);
+#define CELL 8
+#define COLS (VHS_WIDTH/CELL)
+#define ROWS (VHS_HEIGHT/CELL)
+#define CELLS (COLS*ROWS)
+static int previous[CELLS], queue[CELLS];
+static Vector2 path[CELLS];
 
-#define main GameMain
-#define LoadTexture TestLoadTexture
-#define IsKeyDown TestIsKeyDown
-#define GetFrameTime TestGetFrameTime
-#define WindowShouldClose TestWindowShouldClose
-#define DrawTexturePro TestDrawTexturePro
-#define SetTargetFPS TestSetTargetFPS
-#define SetConfigFlags TestSetConfigFlags
-#include "../src/main.c"
-#undef main
-#undef LoadTexture
-#undef IsKeyDown
-#undef GetFrameTime
-#undef WindowShouldClose
-#undef DrawTexturePro
-#undef SetTargetFPS
-#undef SetConfigFlags
+static bool Near(Vector2 a, Vector2 b) { return fabsf(a.x-b.x)<.001f && fabsf(a.y-b.y)<.001f; }
+static Vector2 Center(int index) { return (Vector2){(index%COLS)*CELL+CELL/2.0f,(index/COLS)*CELL+CELL/2.0f}; }
 
-static unsigned int backgrounds[5], animationIds[16], standingIds[4];
-static int room = -1, roomMask, frame, stage, keys, transitions, spriteLoads;
-static int directionsMask, animationMask, standingMask;
-static bool failed;
-static float x, y;
-static const int expectedRooms[] = {0, 1, 0, 2, 0, 3, 4, 3, 0};
-
-static Texture2D TestLoadTexture(const char *path) {
-    Texture2D texture = LoadTexture(path);
-    const char *names[] = {"salao_principal.png", "banheiro.png", "escritorio.png", "estoque.png", "sala_projecao.png"};
-    const char *directions[] = {"baixo", "cima", "direita", "esquerda"};
-    for (int i = 0; i < 5; i++) {
-        if (strstr(path, names[i])) backgrounds[i] = texture.id;
+static bool CellFree(const World *world, RoomId room, Vector2 point, const Door *target) {
+    if (WorldBlocked(world,room,point)) return false;
+    const Room *definition=RoomsGet(room);
+    for (size_t i=0;i<definition->doorCount;i++) {
+        if (&definition->doors[i]!=target && CheckCollisionPointRec(point,definition->doors[i].trigger)) return false;
     }
-    if (strstr(path, "assets/personagens/john/")) spriteLoads++;
-    for (int d = 0; d < 4; d++) {
-        char suffix[80];
-        snprintf(suffix, sizeof(suffix), "john_parado_%s.png", directions[d]);
-        if (strstr(path, suffix)) standingIds[d] = texture.id;
-        for (int f = 0; f < 4; f++) {
-            snprintf(suffix, sizeof(suffix), "john_andando_%s%d.png", directions[d], f + 1);
-            if (strstr(path, suffix)) animationIds[d * 4 + f] = texture.id;
+    return true;
+}
+
+static int FindPath(const World *world, RoomId room, Vector2 start, const Door *target) {
+    for (int i=0;i<CELLS;i++) previous[i]=-1;
+    int first=(int)(start.y/CELL)*COLS+(int)(start.x/CELL);
+    int head=0,tail=0,goal=-1;
+    previous[first]=-2; queue[tail++]=first;
+    while(head<tail) {
+        int at=queue[head++];
+        if (CheckCollisionPointRec(Center(at),target->trigger)) {goal=at;break;}
+        int x=at%COLS,y=at/COLS;
+        const int dx[]={-1,1,0,0},dy[]={0,0,-1,1};
+        for (int d=0;d<4;d++) {
+            int nx=x+dx[d],ny=y+dy[d];
+            if(nx<0||nx>=COLS||ny<0||ny>=ROWS)continue;
+            int next=ny*COLS+nx;
+            if(previous[next]!=-1||!CellFree(world,room,Center(next),target))continue;
+            previous[next]=at;queue[tail++]=next;
         }
     }
-    if (!texture.id) failed = true;
-    return texture;
+    if(goal<0)return 0;
+    int count=0;
+    for(int at=goal;at>=0;at=previous[at])path[count++]=Center(at);
+    for(int i=0;i<count/2;i++){Vector2 t=path[i];path[i]=path[count-1-i];path[count-1-i]=t;}
+    return count;
 }
 
-static void TestSetTargetFPS(int fps) { (void)fps; SetTargetFPS(0); }
-static void TestSetConfigFlags(unsigned int flags) { SetConfigFlags(flags | FLAG_WINDOW_HIDDEN); }
-static float TestGetFrameTime(void) { return 1.0f / 60.0f; }
-static bool TestIsKeyDown(int key) {
-    return (key == KEY_A && (keys & 1)) || (key == KEY_D && (keys & 2)) ||
-           (key == KEY_W && (keys & 4)) || (key == KEY_S && (keys & 8));
-}
-
-static bool moveTo(float tx, float ty) {
-    float dx = tx * (float)GetScreenWidth() - x;
-    float dy = ty * (float)GetScreenHeight() - y;
-    keys = 0;
-    if (fabsf(dx) > 5.0f) keys |= dx < 0 ? 1 : 2;
-    if (fabsf(dy) > 5.0f) keys |= dy < 0 ? 4 : 8;
-    directionsMask |= keys;
-    return keys == 0;
-}
-
-static bool TestWindowShouldClose(void) {
-    keys = 0;
-    if (failed || ++frame > 4000 || stage == 11) return true;
-    if (room < 0) return false;
-    switch (stage) {
-        case 0: if (moveTo(.50f, .50f)) stage++; break;
-        case 1: if (room == BANHEIRO) stage++; else moveTo(.02f, .50f); break;
-        case 2: if (room == SALAO) stage++; else moveTo(.96f, .68f); break;
-        case 3: if (moveTo(.30f, .53f)) stage++; break;
-        case 4: if (room == ESCRITORIO) stage++; else moveTo(.30f, .10f); break;
-        case 5: if (room == SALAO) stage++; else moveTo(.50f, .94f); break;
-        case 6: if (moveTo(.70f, .30f)) stage++; break;
-        case 7: if (room == ESTOQUE) stage++; else moveTo(.70f, .10f); break;
-        case 8: if (room == SALA_PROJECAO) stage++; else moveTo(.50f, .15f); break;
-        case 9: if (room == ESTOQUE) stage++; else moveTo(.50f, .94f); break;
-        case 10: if (room == SALAO) stage++; else moveTo(.50f, .94f); break;
+static bool Travel(Game *game, RoomId destination) {
+    RoomId origin=game->room;
+    const Room *definition=RoomsGet(origin);
+    const Door *door=NULL;
+    for(size_t i=0;i<definition->doorCount;i++)if(definition->doors[i].destination==destination)door=&definition->doors[i];
+    assert(door);
+    int length=FindPath(&game->world,origin,game->player.position,door);
+    if(!length){fprintf(stderr,"SEM CAMINHO: %s -> %s\n",definition->name,RoomsGet(destination)->name);return false;}
+    int point=0;
+    for(int frame=0;frame<6000;frame++){
+        if(game->room!=origin){assert(game->room==destination);assert(!WorldBlocked(&game->world,game->room,game->player.position));return true;}
+        if(point>=length){
+            Vector2 through={0};
+            if(door->movementDirection==LEFT)through.x=-1;
+            if(door->movementDirection==RIGHT)through.x=1;
+            if(door->movementDirection==UP)through.y=-1;
+            if(door->movementDirection==DOWN)through.y=1;
+            GameStep(game,(GameInput){.movement=through},1.0f/60.0f);
+            continue;
+        }
+        Vector2 delta={path[point].x-game->player.position.x,path[point].y-game->player.position.y};
+        if(fabsf(delta.x)<.05f&&fabsf(delta.y)<.05f){point++;continue;}
+        float distance=sqrtf(delta.x*delta.x+delta.y*delta.y);
+        GameStep(game,(GameInput){.movement=delta},fminf(1.0f/60.0f,distance/252.0f));
+        assert(!WorldBlocked(&game->world,game->room,game->player.position));
     }
+    fprintf(stderr,"TRANSICAO NAO ALCANCADA: %s -> %s em %.2f,%.2f ponto=%d/%d\n",definition->name,RoomsGet(destination)->name,game->player.position.x,game->player.position.y,point,length);
     return false;
 }
 
-static void TestDrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest,
-                              Vector2 origin, float rotation, Color tint) {
-    bool background = false;
-    for (int i = 0; i < 5; i++) {
-        if (texture.id != backgrounds[i]) continue;
-        background = true;
-        roomMask |= 1 << i;
-        if (room != i) {
-            printf("TESTE: sala %d -> %d\n", room, i);
-            if (transitions >= 9 || expectedRooms[transitions] != i) failed = true;
-            transitions++;
-            room = i;
-        }
-        break;
-    }
-    if (!background) {
-        x = dest.x + dest.width * .5f;
-        y = dest.y + dest.height;
-        if (!isfinite(x) || !isfinite(y) || x < 0 || y < 0 ||
-            x > GetScreenWidth() || y > GetScreenHeight()) failed = true;
-        for (int i = 0; i < 16; i++) if (texture.id == animationIds[i]) animationMask |= 1 << i;
-        for (int i = 0; i < 4; i++) if (texture.id == standingIds[i]) standingMask |= 1 << i;
-    }
-    DrawTexturePro(texture, source, dest, origin, rotation, tint);
+static void SaveCanvas(Game *game,const char *pathName){
+    GameDraw(game);
+    Image image=LoadImageFromTexture(game->canvas.texture);
+    ImageFlipVertical(&image);
+    assert(ExportImage(image,pathName));
+    UnloadImage(image);
 }
 
-int main(void) {
+int main(void){
     SetTraceLogLevel(LOG_WARNING);
-    char *args[] = {"teste-base", "--windowed", NULL};
-    int result = GameMain(2, args);
-    bool passed = result == 0 && !failed && stage == 11 && roomMask == 31 &&
-                  transitions == 9 && spriteLoads == 20 && directionsMask == 15 &&
-                  animationMask == 65535 && standingMask == 15;
-    FilePathList files = LoadDirectoryFilesEx("assets", ".png", true);
-    unsigned int imageCount = files.count;
-    passed = passed && imageCount > 0;
-    for (unsigned int i = 0; i < files.count; i++) {
-        Image image = LoadImage(files.paths[i]);
-        if (image.data == NULL || image.width <= 0 || image.height <= 0) {
-            fprintf(stderr, "TESTE: imagem invalida: %s\n", files.paths[i]);
-            passed = false;
-        }
-        UnloadImage(image);
+    SetConfigFlags(FLAG_WINDOW_HIDDEN|FLAG_WINDOW_RESIZABLE);
+    InitWindow(VHS_WIDTH,VHS_HEIGHT,"Teste VHS");
+    assert(IsWindowReady());
+    SetTargetFPS(0);
+    Game game;
+    assert(GameInit(&game));
+    assert(!game.inventoryOpen);
+
+    for(int r=0;r<ROOM_COUNT;r++){
+        game.room=(RoomId)r;
+        PlayerInit(&game.player,RoomsGet((RoomId)r)->spawn);
+        game.debugCollisions=true;
+        char file[80];snprintf(file,sizeof(file),"build/qa_sala_%d.png",r);
+        SaveCanvas(&game,file);
     }
-    UnloadDirectoryFiles(files);
-    printf("TESTE: resultado=%s quadros=%d salas=%d entradas=%d sprites=%d direcoes=%d animacoes=%d poses=%d imagens=%u\n",
-           passed ? "APROVADO" : "FALHOU", frame, roomMask, transitions, spriteLoads,
-           directionsMask, animationMask, standingMask, imageCount);
-    return passed ? 0 : 1;
+
+    // Every spawn/arrival is clear and every doorway has at least one reachable grid cell.
+    for(int r=0;r<ROOM_COUNT;r++){
+        const Room *room=RoomsGet((RoomId)r);
+        assert(room&&(r==ROOM_HALL||room->obstacleCount>0));
+        assert(!WorldBlocked(&game.world,(RoomId)r,room->spawn));
+        for(size_t d=0;d<room->doorCount;d++){
+            assert(!WorldBlocked(&game.world,room->doors[d].destination,room->doors[d].arrival));
+            if(FindPath(&game.world,(RoomId)r,room->spawn,&room->doors[d])<=0){
+                fprintf(stderr,"PORTA INACESSIVEL: %s -> %s\n",room->name,RoomsGet(room->doors[d].destination)->name);
+                return 1;
+            }
+        }
+        game.room=(RoomId)r;
+        PlayerInit(&game.player,room->spawn);
+        game.debugCollisions=true;
+        char file[80];snprintf(file,sizeof(file),"build/qa_sala_%d.png",r);
+        SaveCanvas(&game,file);
+    }
+    game.debugCollisions=false;
+    game.room=ROOM_HALL;
+    PlayerInit(&game.player,RoomsGet(ROOM_HALL)->spawn);
+
+    const RoomId visits[]={ROOM_BATHROOM,ROOM_HALL,ROOM_OFFICE,ROOM_HALL,ROOM_STORAGE,ROOM_PROJECTION,ROOM_STORAGE,ROOM_HALL};
+    for(size_t i=0;i<sizeof(visits)/sizeof(visits[0]);i++){
+        assert(Travel(&game,visits[i]));
+        printf("TESTE: entrou em %s sem atravessar obstaculos\n",RoomsGet(game.room)->name);
+    }
+
+    // A shelf boundary in the upstream alpha mask blocks X but allows sliding.
+    Vector2 start={420,330};
+    assert(!WorldBlocked(&game.world,ROOM_HALL,start));
+    Vector2 stopped=WorldMove(&game.world,ROOM_HALL,start,(Vector2){1000,0});
+    assert(stopped.x<440&&stopped.x>=start.x);
+    Vector2 slid=WorldMove(&game.world,ROOM_HALL,start,(Vector2){20,20});
+    assert(slid.x<440&&slid.y>start.y+19);
+
+    // Tab toggles; movement and animation are frozen; Escape closes before requesting exit.
+    PlayerInit(&game.player,RoomsGet(ROOM_HALL)->spawn);
+    GameStep(&game,(GameInput){.toggleInventory=true},1.0f/60);
+    assert(game.inventoryOpen);
+    Player saved=game.player;
+    for(int i=0;i<60;i++)GameStep(&game,(GameInput){.movement={1,1}},1.0f/60);
+    assert(Near(saved.position,game.player.position));
+    assert(saved.frame==game.player.frame&&saved.animationTime==game.player.animationTime);
+    SaveCanvas(&game,"build/inventario_no_jogo.png");
+    GameStep(&game,(GameInput){.toggleInventory=true,.movement={1,0}},1.0f/60);
+    assert(!game.inventoryOpen&&Near(saved.position,game.player.position));
+    GameStep(&game,(GameInput){.toggleInventory=true},1.0f/60);
+    GameStep(&game,(GameInput){.escape=true},1.0f/60);
+    assert(!game.inventoryOpen&&!game.exitRequested);
+
+    // Window size affects presentation only.
+    Vector2 before=game.player.position;
+    SetWindowSize(960,540);
+    GameDraw(&game);
+    assert(Near(before,game.player.position));
+    GameStep(&game,(GameInput){.escape=true},1.0f/60);
+    assert(game.exitRequested);
+
+    FilePathList images=LoadDirectoryFilesEx("assets",".png",true);
+    unsigned int count=images.count;
+    for(unsigned int i=0;i<count;i++){
+        Image im=LoadImage(images.paths[i]);assert(im.data&&im.width>0&&im.height>0);UnloadImage(im);
+    }
+    UnloadDirectoryFiles(images);
+    GameUnload(&game);GameUnload(&game);
+    CloseWindow();
+    printf("APROVADO: cinco salas, portas acessiveis, colisoes, deslizamento, Tab/Esc, pausa, %u imagens.\n",count);
+    return 0;
 }

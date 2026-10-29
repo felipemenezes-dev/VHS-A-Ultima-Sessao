@@ -2,6 +2,10 @@
 
 29 de outubro de 2026 · Passos 1 e 2
 
+**Registro histórico do commit `a310368`.** Para a implementação atual após a
+refatoração, consulte [Passo 3](PASSO_3.md). Os hashes e resultados abaixo se
+referem à base anterior, e não à compilação com inventário e colisões.
+
 ## Base integrada
 
 - Commit de origem: `4e217aee8ea9f7d16747852959f3eabf658be7ca`.

@@ -6,6 +6,7 @@ Jogo 2D em C com raylib.
 - [Regras definitivas da primeira versão](docs/REGRAS_DO_JOGO.md)
 - [Base consolidada e verificações](docs/BASE_TESTADA.md)
 - [Teste de navegação e recursos](tests/README.md)
+- [Passo 3: módulos, colisões e inventário vazio](docs/PASSO_3.md)
 
 O documento de regras descreve o jogo final planejado. Consulte a base testada
 para distinguir os recursos já implementados dos que ainda estão em desenvolvimento.
