@@ -21,14 +21,13 @@ enum Cenario {
     SALA_PROJECAO
 };
 
-int main(void) {
-    SetConfigFlags(FLAG_FULLSCREEN_MODE);
+int main(int argc, char **argv) {
+    bool janela = argc > 1 && TextIsEqual(argv[1], "--windowed");
+    SetConfigFlags(janela ? FLAG_WINDOW_RESIZABLE : FLAG_FULLSCREEN_MODE);
 
-    int monitor = GetCurrentMonitor();
-
-    InitWindow(
-        GetMonitorWidth(monitor), GetMonitorHeight(monitor), "VHS - A Ultima Sessao"
-    );
+    // Zero selects the monitor resolution after the graphics system initializes.
+    InitWindow(janela ? 1280 : 0, janela ? 720 : 0, "VHS - A Ultima Sessao");
+    if (!IsWindowReady()) return 1;
 
     SetTargetFPS(60);
 
