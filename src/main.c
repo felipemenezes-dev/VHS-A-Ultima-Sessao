@@ -48,6 +48,9 @@ static void CapturarTela(const char *path) {
 static void DesenharDepuracao(int room, Vector2 john, Texture2D mask) {
     DrawTexture(mask, 0, 0, (Color){125, 255, 150, 210});
     DrawRectangleLinesEx(feet(john), 2, YELLOW);
+    const FloorBoundary *floor = &roomFloors[room];
+    for (int i = 0; i < floor->count; i++)
+        DrawLineEx(floor->points[i], floor->points[(i + 1) % floor->count], 3, VIOLET);
     for (int i = 0; i < doorCount; i++) {
         const Door *d = &doors[i];
         if (d->from == room) {
@@ -61,10 +64,11 @@ static void DesenharDepuracao(int room, Vector2 john, Texture2D mask) {
             DrawText(TextFormat("Entrada %d", i), d->arrival.x + 22, d->arrival.y - 10, 19, YELLOW);
         }
     }
-    DrawRectangle(20, 90, 440, 96, (Color){6, 8, 14, 230});
+    DrawRectangle(20, 90, 440, 116, (Color){6, 8, 14, 230});
     DrawText("F1 - DEPURACAO", 34, 102, 22, YELLOW);
     DrawText(TextFormat("Pes: %.1f, %.1f | %.1f x %.1f", john.x, john.y, FOOT_W, FOOT_H), 34, 135, 19,
              RAYWHITE);
+    DrawText("Roxo: limite do piso", 34, 184, 18, VIOLET);
     DrawText("Azul: transicao | Amarelo: entrada", 34, 162, 18, SKYBLUE);
 }
 int main(int argc, char **argv) {
@@ -149,6 +153,10 @@ int main(int argc, char **argv) {
             TraceLog(LOG_ERROR, "Destino da porta %d bloqueado", i);
             erro = true;
         }
+    }
+    if (!erro && !sceneDrawInit()) {
+        TraceLog(LOG_ERROR, "Falha ao preparar camadas visuais");
+        erro = true;
     }
     RenderTexture2D quadro = {0};
     if (!erro) {
@@ -278,6 +286,7 @@ int main(int argc, char **argv) {
             if (animacoes[d][f].id)
                 UnloadTexture(animacoes[d][f]);
     }
+    sceneDrawUnload();
     CloseWindow();
     return erro ? 1 : 0;
 }

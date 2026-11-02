@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-bool collisionLoad(CollisionMap *m, const char *path) {
+static bool loadMap(CollisionMap *m, const char *path, int room) {
     memset(m, 0, sizeof *m);
-    m->room = -1;
+    m->room = room;
     Image im = LoadImage(path);
     if (!im.data)
         return false;
@@ -25,11 +25,19 @@ bool collisionLoad(CollisionMap *m, const char *path) {
         UnloadImage(im);
         return false;
     }
-    // Summed-area table built once. Every pixel with alpha > 0 blocks movement.
+    // Build the same whole-footprint query once: painted obstacles OR anything
+    // outside the floor is solid. A gap in a PNG can no longer expose the void.
     for (int y = 0; y < m->height; y++) {
         uint32_t row = 0;
         for (int x = 0; x < m->width; x++) {
-            row += p[y * m->width + x].a != 0;
+            // A boundary pixel is free only if its entire area is on the floor.
+            // Checking the center alone permits subpixel leakage at sloped walls.
+            bool exterior = room >= 0 &&
+                (!worldFloorContains(room, (Vector2){x + .001f, y + .001f}) ||
+                 !worldFloorContains(room, (Vector2){x + .999f, y + .001f}) ||
+                 !worldFloorContains(room, (Vector2){x + .001f, y + .999f}) ||
+                 !worldFloorContains(room, (Vector2){x + .999f, y + .999f}));
+            row += p[y * m->width + x].a != 0 || exterior;
             m->sum[(y + 1) * (m->width + 1) + x + 1] = row + m->sum[y * (m->width + 1) + x + 1];
         }
     }
@@ -38,13 +46,13 @@ bool collisionLoad(CollisionMap *m, const char *path) {
     m->ready = true;
     return true;
 }
+bool collisionLoad(CollisionMap *m, const char *path) {
+    return loadMap(m, path, -1);
+}
 bool collisionLoadRoom(CollisionMap *m, int room) {
     if (room < 0 || room >= NUM_CENARIOS)
         return false;
-    if (!collisionLoad(m, rooms[room].mask))
-        return false;
-    m->room = room;
-    return true;
+    return loadMap(m, rooms[room].mask, room);
 }
 static bool crossesDoorSeal(const CollisionMap *m, Rectangle r) {
     Vector2 corners[4] = {

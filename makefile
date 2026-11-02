@@ -12,11 +12,12 @@ LDLIBS = -L/usr/local/lib -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 endif
 CORE = src/world.c src/collision.c
 HEADERS = $(wildcard src/*.h)
+DEPTH_SHAPES = $(wildcard src/depth_*.inc)
 
-.PHONY: all run clean test masks sanitize
+.PHONY: all run clean test test-depth masks sanitize
 all: build/vhs
 
-build/vhs: src/main.c src/scene_draw.c $(CORE) $(HEADERS)
+build/vhs: src/main.c src/scene_draw.c $(CORE) $(HEADERS) $(DEPTH_SHAPES)
 	mkdir -p build
 	$(CC) $(CPPFLAGS) $(CFLAGS) src/main.c src/scene_draw.c $(CORE) $(LDLIBS) -o $@
 
@@ -33,6 +34,14 @@ build/test_rooms: tests/test_rooms.c tests/navigation.h $(CORE) $(HEADERS)
 test: build/test_rooms
 	python3 tests/test_assets.py
 	./build/test_rooms
+
+build/test_depth: tests/test_depth.c src/scene_draw.c $(CORE) $(HEADERS) $(DEPTH_SHAPES)
+	mkdir -p build
+	$(CC) $(CPPFLAGS) $(CFLAGS) tests/test_depth.c src/scene_draw.c $(CORE) $(LDLIBS) -o $@
+
+test-depth: build/test_depth
+	mkdir -p build/depth-after
+	./build/test_depth build/depth-after
 
 sanitize:
 	mkdir -p build

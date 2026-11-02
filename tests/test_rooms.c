@@ -29,6 +29,11 @@ static void testNavigation(void) {
             if (nav->prev[a] >= 0) {
                 Vector2 p = navPoint(a);
                 CHECK(p.x > 20 && p.y > 20 && p.x < WORLD_W - 4 && p.y < WORLD_H - 4);
+                Rectangle foot = feet(p);
+                CHECK(worldFloorContains(room, (Vector2){foot.x + .01f, foot.y + .01f}));
+                CHECK(worldFloorContains(room, (Vector2){foot.x + foot.width - .01f, foot.y + .01f}));
+                CHECK(worldFloorContains(room, (Vector2){foot.x + .01f, foot.y + foot.height - .01f}));
+                CHECK(worldFloorContains(room, (Vector2){foot.x + foot.width - .01f, foot.y + foot.height - .01f}));
             }
         for (int i = 0; i < doorCount; i++) {
             if (doors[i].to == room) {
@@ -210,7 +215,7 @@ static void testRoutes(void) {
     free(nav);
 }
 static void testPortalDirection(void) {
-    const float times[] = {1.f / 144, 1.f / 60, 1.f / 30, .1f, .25f};
+    const float times[] = {1.f / 144, 1.f / 60, 1.f / 30, .1f, .25f, 1.5f, 4.f};
     for (int i = 0; i < doorCount; i++) {
         const Door *d = &doors[i];
         Vector2 p = {d->area.x + d->area.width / 2, d->area.y + d->area.height / 2};
@@ -246,6 +251,54 @@ static void testPortalDirection(void) {
         }
     }
 }
+// Regressions use measured artwork coordinates, not the implementation's
+// polygon vertices: the wall must stop John BEFORE his feet enter black space.
+static void testFloorLimits(void) {
+    const struct { int room; Vector2 start; float wallY; } fronts[] = {
+        {SALAO, {836,680}, 728}, {BANHEIRO, {850,760}, 800},
+        {ESCRITORIO, {452,735}, 759}, {ESTOQUE, {600,740}, 780},
+        {SALA_PROJECAO, {1000,740}, 770}
+    };
+    for (unsigned i = 0; i < sizeof fronts / sizeof *fronts; i++) {
+        const CollisionMap *m = &maps[fronts[i].room];
+        Vector2 start = fronts[i].start;
+        CHECK(!collisionFeet(m, start));
+        Vector2 stopped = collisionMove(m, start, (Vector2){0,2000});
+        CHECK(stopped.y <= fronts[i].wallY);
+        CHECK(stopped.y > start.y);
+        CHECK(!collisionFeet(m, stopped));
+        // Horizontal motion is still accepted while pushing into the wall.
+        Vector2 slid = collisionMove(m, stopped, (Vector2){32,200});
+        CHECK(fabsf(slid.x - stopped.x - 32) < .01f);
+        CHECK(slid.y <= fronts[i].wallY);
+        CHECK(!collisionFeet(m, slid));
+        printf("LIMITE %s: y %.1f -> %.1f, parede %.0f; deslizamento %.1f\n",
+               rooms[fronts[i].room].name, start.y, stopped.y, fronts[i].wallY, slid.x-stopped.x);
+    }
+    const struct { int room; Vector2 point; } outside[] = {
+        {SALAO,{500,920}}, {SALAO,{1600,900}}, {BANHEIRO,{800,900}},
+        {BANHEIRO,{1550,600}}, {ESCRITORIO,{452,874}}, {ESCRITORIO,{1200,850}},
+        {ESCRITORIO,{100,500}}, {ESTOQUE,{600,853}}, {ESTOQUE,{1200,850}},
+        {ESTOQUE,{1550,800}}, {SALA_PROJECAO,{1000,850}}, {SALA_PROJECAO,{500,850}},
+        {SALA_PROJECAO,{1500,500}}
+    };
+    for (unsigned i = 0; i < sizeof outside / sizeof *outside; i++)
+        CHECK(collisionFeet(&maps[outside[i].room], outside[i].point));
+    // Even if the portal cooldown delays a transition, a long movement stops
+    // in its recess, never beyond it; once released the same door still works.
+    for (int i = 0; i < doorCount; i++) {
+        const Door *d = &doors[i];
+        Vector2 p = {d->area.x+d->area.width/2, d->area.y+d->area.height/2};
+        p = collisionMove(&maps[d->from],p,(Vector2){d->direction.x*2000,d->direction.y*2000});
+        CHECK(!collisionFeet(&maps[d->from],p));
+        CHECK(worldDoorAt(d->from,p,d->direction)==i);
+        int room = d->from, facing = 0; float cooldown = .2f;
+        CHECK(!worldTransition(&room,&p,&facing,d->direction,&cooldown));
+        cooldown = 0;
+        CHECK(worldTransition(&room,&p,&facing,d->direction,&cooldown));
+        CHECK(room == d->to);
+    }
+}
 int main(void) {
     SetTraceLogLevel(LOG_WARNING);
     for (int i = 0; i < NUM_CENARIOS; i++) {
@@ -254,6 +307,7 @@ int main(void) {
         if (!ok)
             return 1;
     }
+    testFloorLimits();
     testCoordinates();
     testCollisionPixels();
     testNavigation();

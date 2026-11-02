@@ -30,6 +30,13 @@ typedef struct {
     Vector2 direction;
 } Door;
 
+typedef struct {
+    const Vector2 *points;
+    int count;
+} FloorBoundary;
+extern const FloorBoundary roomFloors[NUM_CENARIOS];
+bool worldFloorContains(int room, Vector2 point);
+
 extern const Room rooms[NUM_CENARIOS];
 extern const Door doors[];
 extern const int doorCount;
