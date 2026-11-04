@@ -1,20 +1,22 @@
 #include "mundo.h"
 #include <math.h>
 
+
 #define SALA(n, f, x, y)                                                                           \
     {                                                                                              \
         n, "assets/cenarios/" f ".png", "assets/cenarios/colisoes_" f ".png", {                    \
             x, y                                                                                   \
         }                                                                                          \
     }
-const Sala salas[NUM_CENARIOS] = {{"Salao principal",
+const Sala salas[NUM_CENARIOS] = {{"Salão principal",
                                    "assets/cenarios/salao_principal.png",
                                    "assets/cenarios/colisoes_salao.png",
                                    {836, 583}},
                                   SALA("Banheiro", "banheiro", 1320, 620),
-                                  SALA("Escritorio", "escritorio", 835, 704),
+                                  SALA("Escritório", "escritorio", 835, 704),
                                   SALA("Estoque", "estoque", 845, 727),
-                                  SALA("Sala de projecao", "sala_projecao", 825, 704)};
+                                  SALA("Sala de projeção", "sala_projecao", 825, 704)};
+
 
 const Porta portas[] = {{SALAO,
                          BANHEIRO,
@@ -30,7 +32,7 @@ const Porta portas[] = {{SALAO,
                          {1360, 590, 70, 110},
                          {185, 520},
                          DIREITA,
-                         "Salao principal",
+                         "Salão principal",
                          {1411, 579},
                          {1457, 751},
                          {1, 0}},
@@ -39,7 +41,7 @@ const Porta portas[] = {{SALAO,
                          {450, 202, 102, 60},
                          {835, 704},
                          CIMA,
-                         "Escritorio",
+                         "Escritório",
                          {447, 197},
                          {568, 197},
                          {0, -1}},
@@ -48,7 +50,7 @@ const Porta portas[] = {{SALAO,
                          {775, 756, 126, 140},
                          {500, 290},
                          BAIXO,
-                         "Salao principal",
+                         "Salão principal",
                          {0, 0},
                          {0, 0},
                          {0, 1}},
@@ -66,7 +68,7 @@ const Porta portas[] = {{SALAO,
                          {765, 784, 165, 130},
                          {1174, 293},
                          BAIXO,
-                         "Salao principal",
+                         "Salão principal",
                          {0, 0},
                          {0, 0},
                          {0, 1}},
@@ -75,7 +77,7 @@ const Porta portas[] = {{SALAO,
                          {778, 202, 132, 67},
                          {825, 704},
                          CIMA,
-                         "Sala de projecao",
+                         "Sala de projeção",
                          {0, 0},
                          {0, 0},
                          {0, -1}},
@@ -89,6 +91,7 @@ const Porta portas[] = {{SALAO,
                          {0, 0},
                          {0, 1}}};
 const int quantidadePortas = sizeof portas / sizeof *portas;
+
 
 static const Vector2 chaoSalao[] = {{235, 196}, {1390, 196}, {1550, 350}, {1630, 735}, {1530, 835},
                                     {978, 835}, {978, 728},  {700, 728},  {700, 835},  {132, 835},
@@ -113,6 +116,7 @@ const LimiteChao limitesChao[NUM_CENARIOS] = {CHAO(chaoSalao), CHAO(chaoBanheiro
                                               CHAO(chaoProjecao)};
 #undef CHAO
 
+
 bool pontoDentroChao(int sala, Vector2 p) {
     if (sala < 0 || sala >= NUM_CENARIOS || !isfinite(p.x) || !isfinite(p.y))
         return false;
@@ -126,9 +130,11 @@ bool pontoDentroChao(int sala, Vector2 p) {
     return pontoDentroPoligono;
 }
 
+
 Rectangle caixaPes(Vector2 p) {
     return (Rectangle){p.x - LARGURA_PES / 2, p.y - ALTURA_PES, LARGURA_PES, ALTURA_PES};
 }
+
 
 Rectangle areaExibicao(int largura, int altura) {
     float escala = fminf((float)largura / LARGURA_MUNDO, (float)altura / ALTURA_MUNDO);
@@ -136,13 +142,16 @@ Rectangle areaExibicao(int largura, int altura) {
                        LARGURA_MUNDO * escala, ALTURA_MUNDO * escala};
 }
 
+
 Vector2 telaParaMundo(Vector2 p, Rectangle v) {
     return (Vector2){(p.x - v.x) * LARGURA_MUNDO / v.width, (p.y - v.y) * ALTURA_MUNDO / v.height};
 }
 
+
 Vector2 mundoParaTela(Vector2 p, Rectangle v) {
     return (Vector2){v.x + p.x * v.width / LARGURA_MUNDO, v.y + p.y * v.height / ALTURA_MUNDO};
 }
+
 
 int encontrarPorta(int sala, Vector2 p, Vector2 movimento) {
     for (int i = 0; i < quantidadePortas; i++) {
@@ -153,6 +162,7 @@ int encontrarPorta(int sala, Vector2 p, Vector2 movimento) {
     }
     return -1;
 }
+
 
 bool trocarSala(int *sala, Vector2 *p, int *direcaoOlhar, Vector2 movimento, float *esperaTroca) {
     if (*esperaTroca > 0)

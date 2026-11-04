@@ -2,6 +2,7 @@
 #define VHS_MUNDO_H
 #include "raylib.h"
 
+
 #define LARGURA_MUNDO 1672
 #define ALTURA_MUNDO 941
 #define NUM_CENARIOS 5
@@ -12,13 +13,16 @@
 #define LARGURA_PES (ALTURA_JOHN * 0.24f)
 #define ALTURA_PES (ALTURA_JOHN * 0.12f)
 
+
 enum Direcao { BAIXO = 0, CIMA, DIREITA, ESQUERDA };
 enum Cenario { SALAO = 0, BANHEIRO, ESCRITORIO, ESTOQUE, SALA_PROJECAO };
+
 
 typedef struct {
     const char *nome, *imagem, *mascara;
     Vector2 entrada;
 } Sala;
+
 
 typedef struct {
     int origem, destino;
@@ -30,12 +34,14 @@ typedef struct {
     Vector2 direcao;
 } Porta;
 
+
 typedef struct {
     const Vector2 *pontos;
     int quantidade;
 } LimiteChao;
 extern const LimiteChao limitesChao[NUM_CENARIOS];
 bool pontoDentroChao(int sala, Vector2 ponto);
+
 
 extern const Sala salas[NUM_CENARIOS];
 extern const Porta portas[];
