@@ -1,8 +1,9 @@
 
+#include "raylib.h"
 #include "legendas.h"
 #include <string.h>
 
-static char textoLegenda[256] = "";
+static char textoLegenda[512] = "";
 static float tempoRestante = 0.0f;
 static bool legendaAtiva = false;
 
@@ -45,11 +46,28 @@ void desenharLegendas(void) {
     int larguraTela = GetScreenWidth();
     int alturaTela = GetScreenHeight();
 
-    int larguraCaixa = larguraTela - 100;
-    int alturaCaixa = 80;
+    int tamanhoFonte = 24;
+    int espacamento = 8;
 
+    int larguraCaixa = larguraTela - 100;
     int posX = 50;
-    int posY = alturaTela - 120;
+
+    int quantidadeLinhas = 1;
+
+    for (int i = 0; textoLegenda[i] != '\0'; i++) {
+        if (textoLegenda[i] == '\n') {
+            quantidadeLinhas++;
+        }
+    }
+
+    int alturaTexto = quantidadeLinhas * (tamanhoFonte + espacamento);
+    int alturaCaixa = alturaTexto + 30;
+
+    if (alturaCaixa < 80) {
+        alturaCaixa = 80;
+    }
+
+    int posY = alturaTela - alturaCaixa - 40;
 
     DrawRectangle(
         posX,
@@ -67,20 +85,49 @@ void desenharLegendas(void) {
         Fade(WHITE, 0.50f)
     );
 
-    int tamanhoFonte = 24;
+    int textoY = posY + 15;
 
-    int larguraTexto = MeasureText(textoLegenda, tamanhoFonte);
+    const char *inicioLinha = textoLegenda;
 
-    int textoX = (larguraTela - larguraTexto) / 2;
-    int textoY = posY + (alturaCaixa - tamanhoFonte) / 2;
+    while (*inicioLinha != '\0') {
+        const char *fimLinha = strchr(inicioLinha, '\n');
 
-    DrawText(
-        textoLegenda,
-        textoX,
-        textoY,
-        tamanhoFonte,
-        WHITE
-    );
+        int tamanhoLinha;
+
+        if (fimLinha != NULL) {
+            tamanhoLinha = (int)(fimLinha - inicioLinha);
+        } else {
+            tamanhoLinha = (int)strlen(inicioLinha);
+        }
+
+        char linha[512];
+
+        if (tamanhoLinha >= (int)sizeof(linha)) {
+            tamanhoLinha = sizeof(linha) - 1;
+        }
+
+        memcpy(linha, inicioLinha, tamanhoLinha);
+        linha[tamanhoLinha] = '\0';
+
+        int larguraTexto = MeasureText(linha, tamanhoFonte);
+        int textoX = (larguraTela - larguraTexto) / 2;
+
+        DrawText(
+            linha,
+            textoX,
+            textoY,
+            tamanhoFonte,
+            WHITE
+        );
+
+        textoY += tamanhoFonte + espacamento;
+
+        if (fimLinha == NULL) {
+            break;
+        }
+
+        inicioLinha = fimLinha + 1;
+    }
 }
 
 void liberarLegendas(void) {
