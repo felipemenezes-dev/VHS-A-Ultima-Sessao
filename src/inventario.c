@@ -16,8 +16,17 @@ const ObjetoInventario *inventarioBuscarObjeto(const Inventario *inventario, int
     return NULL;
 }
 
+const Fita *inventarioBuscarFita(const Inventario *inventario, int id) {
+    if (!inventario || id <= 0)
+        return NULL;
+
+    return buscarFita(inventario->fitas, id);
+}
+
 bool inventarioPossui(const Inventario *inventario, int id) {
-    return inventarioBuscarObjeto(inventario, id) != NULL;
+    return inventario &&
+           (inventarioBuscarObjeto(inventario, id) != NULL ||
+            inventarioBuscarFita(inventario, id) != NULL);
 }
 
 ResultadoInventario inventarioAdicionarObjeto(
@@ -27,16 +36,11 @@ ResultadoInventario inventarioAdicionarObjeto(
     const char *descricao,
     bool consumivel
 ) {
-    if (
-        !inventario ||
-        id <= 0 ||
-        !nome ||
-        !*nome ||
-        !descricao ||
+    if (!inventario || id <= 0 || !nome || !*nome || !descricao ||
         strlen(nome) >= sizeof inventario->objetos[0].nome ||
-        strlen(descricao) >= sizeof inventario->objetos[0].descricao
-    )
+        strlen(descricao) >= sizeof inventario->objetos[0].descricao) {
         return INVENTARIO_INVALIDO;
+    }
 
     if (inventarioPossui(inventario, id))
         return INVENTARIO_DUPLICADO;
@@ -62,6 +66,28 @@ ResultadoInventario inventarioAdicionarObjeto(
     return INVENTARIO_CHEIO;
 }
 
+ResultadoInventario inventarioAdicionarFita(
+    Inventario *inventario,
+    int id,
+    const char *nome,
+    int frequencia,
+    int digito
+) {
+    if (!inventario || id <= 0 || !nome || !*nome)
+        return INVENTARIO_INVALIDO;
+
+    if (inventarioPossui(inventario, id))
+        return INVENTARIO_DUPLICADO;
+
+    if (contarFitas(inventario->fitas) >= INVENTARIO_MAX_FITAS)
+        return INVENTARIO_CHEIO;
+
+    if (!inserirFita(&inventario->fitas, id, nome, frequencia, digito))
+        return INVENTARIO_CHEIO;
+
+    return INVENTARIO_OK;
+}
+
 int inventarioContarObjetos(const Inventario *inventario) {
     if (!inventario)
         return 0;
@@ -74,6 +100,10 @@ int inventarioContarObjetos(const Inventario *inventario) {
     return total;
 }
 
+int inventarioContarFitas(const Inventario *inventario) {
+    return inventario ? contarFitas(inventario->fitas) : 0;
+}
+
 bool inventarioConsumirObjeto(Inventario *inventario, int id) {
     if (!inventario)
         return false;
@@ -81,11 +111,9 @@ bool inventarioConsumirObjeto(Inventario *inventario, int id) {
     for (int i = 0; i < INVENTARIO_MAX_OBJETOS; i++) {
         ObjetoInventario *objeto = &inventario->objetos[i];
 
-        if (
-            objeto->id == id &&
+        if (objeto->id == id &&
             objeto->estado == OBJETO_GUARDADO &&
-            objeto->consumivel
-        ) {
+            objeto->consumivel) {
             objeto->estado = OBJETO_USADO;
             return true;
         }
@@ -111,6 +139,9 @@ bool inventarioRemoverObjeto(Inventario *inventario, int id) {
 }
 
 void inventarioLimpar(Inventario *inventario) {
-    if (inventario)
-        *inventario = (Inventario){0};
+    if (!inventario)
+        return;
+
+    liberarLista(&inventario->fitas);
+    *inventario = (Inventario){0};
 }

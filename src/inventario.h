@@ -1,9 +1,11 @@
 #ifndef VHS_INVENTARIO_H
 #define VHS_INVENTARIO_H
 
+#include "fitas.h"
 #include <stdbool.h>
 
 #define INVENTARIO_MAX_OBJETOS 4
+#define INVENTARIO_MAX_FITAS 3
 
 typedef enum {
     OBJETO_VAZIO,
@@ -27,6 +29,7 @@ typedef struct {
 } ObjetoInventario;
 
 typedef struct {
+    Fita *fitas;
     ObjetoInventario objetos[INVENTARIO_MAX_OBJETOS];
 } Inventario;
 
@@ -38,8 +41,17 @@ ResultadoInventario inventarioAdicionarObjeto(
     const char *descricao,
     bool consumivel
 );
+ResultadoInventario inventarioAdicionarFita(
+    Inventario *inventario,
+    int id,
+    const char *nome,
+    int frequencia,
+    int digito
+);
 const ObjetoInventario *inventarioBuscarObjeto(const Inventario *inventario, int id);
+const Fita *inventarioBuscarFita(const Inventario *inventario, int id);
 int inventarioContarObjetos(const Inventario *inventario);
+int inventarioContarFitas(const Inventario *inventario);
 bool inventarioConsumirObjeto(Inventario *inventario, int id);
 bool inventarioRemoverObjeto(Inventario *inventario, int id);
 void inventarioLimpar(Inventario *inventario);
