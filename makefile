@@ -6,7 +6,7 @@ BIBLIOTECAS = -L$(RAYLIB)/lib -Wl,-rpath,'$(abspath $(RAYLIB))/lib' -lraylib -lG
 FONTES = $(wildcard src/*.c)
 CABECALHOS = $(wildcard src/*.h)
 
-.PHONY: compilar executar run limpar
+.PHONY: compilar executar run clean limpar
 
 compilar: build/vhs
 
@@ -17,5 +17,5 @@ build/vhs: $(FONTES) $(CABECALHOS)
 executar run: build/vhs
 	./build/vhs
 
-limpar:
+clean limpar:
 	rm -f build/vhs
