@@ -21,52 +21,100 @@ typedef struct {
 
 static ObjetoMapa objetos[] = {
     {
-        ID_KIT_MEDICO, SALAO, "Kit medico",
+        ID_KIT_MEDICO,
+        SALAO,
+        "Kit medico",
         "Recupera 30 pontos de vida quando usado com Q.",
         "assets/itens/kit_medico.png",
-        {470, 640}, TAMANHO_OBJETO, true, false, {0}
+        {470, 640},
+        TAMANHO_OBJETO,
+        true,
+        false,
+        {0}
     },
     {
-        ID_FITA_17, BANHEIRO, "A Chamada",
+        ID_FITA_17,
+        BANHEIRO,
+        "A Chamada",
         "Fita VHS com frequencia 17. Primeiro fragmento da transmissao.",
         "assets/itens/fita_17.png",
-        {1215, 235}, TAMANHO_OBJETO, true, false, {0}
+        {1318, 433},
+        TAMANHO_OBJETO,
+        true,
+        false,
+        {0}
     },
     {
-        ID_CHAVE_ESTOQUE, ESCRITORIO, "Chave do estoque",
+        ID_CHAVE_ESTOQUE,
+        ESCRITORIO,
+        "Chave do estoque",
         "Chave permanente que libera a porta do estoque.",
         "assets/itens/chave_estoque.png",
-        {1110, 301}, TAMANHO_OBJETO, true, false, {0}
+        {1008, 445},
+        TAMANHO_OBJETO,
+        true,
+        false,
+        {0}
     },
     {
-        ID_FITA_42, ESTOQUE, "O Corredor",
+        ID_FITA_42,
+        ESTOQUE,
+        "O Corredor",
         "Fita VHS com frequencia 42. Segundo fragmento da transmissao.",
         "assets/itens/fita_42.png",
-        {1280, 248}, TAMANHO_OBJETO, true, false, {0}
+        {1306, 586},
+        TAMANHO_OBJETO,
+        true,
+        false,
+        {0}
     },
     {
-        ID_FUSIVEL, ESTOQUE, "Fusivel",
+        ID_FUSIVEL,
+        ESTOQUE,
+        "Fusivel",
         "Componente necessario para restaurar a energia da sala de projecao.",
         "assets/itens/fusivel.png",
-        {954, 653}, TAMANHO_OBJETO, true, false, {0}
+        {1333, 743},
+        TAMANHO_OBJETO,
+        true,
+        false,
+        {0}
     },
     {
-        ID_FITA_89, SALA_PROJECAO, "Sala Vazia",
+        ID_FITA_89,
+        SALA_PROJECAO,
+        "Sala Vazia",
         "Fita VHS com frequencia 89. Terceiro fragmento da transmissao.",
         "assets/itens/fita_89.png",
-        {1306, 288}, TAMANHO_OBJETO, true, false, {0}
+        {1172, 326},
+        TAMANHO_OBJETO,
+        true,
+        false,
+        {0}
     },
     {
-        ID_BATERIA_FLASH, SALA_PROJECAO, "Bateria do flash",
+        ID_BATERIA_FLASH,
+        SALA_PROJECAO,
+        "Bateria do flash",
         "Adiciona duas cargas ao flash.",
         "assets/itens/bateria_flash.png",
-        {1045, 627}, TAMANHO_OBJETO, true, false, {0}
+        {458, 594},
+        TAMANHO_OBJETO,
+        true,
+        false,
+        {0}
     },
     {
-        0, ESCRITORIO, "Bilhete do gerente",
+        0,
+        ESCRITORIO,
+        "Bilhete do gerente",
         "Bilhete que sera examinado em uma etapa posterior.",
         "assets/itens/bilhete_gerente.png",
-        {1260, 640}, TAMANHO_BILHETE, false, false, {0}
+        {708, 445},
+        TAMANHO_BILHETE,
+        false,
+        false,
+        {0}
     }
 };
 
@@ -81,8 +129,9 @@ static ObjetoMapa *encontrarObjetoProximo(int sala, Vector2 personagem) {
     for (int i = 0; i < quantidadeObjetos(); i++) {
         ObjetoMapa *objeto = &objetos[i];
 
-        if (!objeto->coletavel || objeto->coletado || objeto->sala != sala)
+        if (!objeto->coletavel || objeto->coletado || objeto->sala != sala) {
             continue;
+        }
 
         float distancia = hypotf(
             personagem.x - objeto->posicao.x,
@@ -105,29 +154,38 @@ bool carregarObjetosMapa(void) {
         objetos[i].textura = LoadTexture(objetos[i].caminho);
 
         if (!objetos[i].textura.id) {
-            TraceLog(LOG_ERROR, "Nao foi possivel carregar o objeto: %s", objetos[i].caminho);
+            TraceLog(
+                LOG_ERROR,
+                "Nao foi possivel carregar o objeto: %s",
+                objetos[i].caminho
+            );
+
             sucesso = false;
         } else {
             SetTextureFilter(objetos[i].textura, TEXTURE_FILTER_POINT);
         }
     }
 
-    if (!sucesso)
+    if (!sucesso) {
         liberarObjetosMapa();
+    }
 
     reiniciarObjetosMapa();
+
     return sucesso;
 }
 
 void reiniciarObjetosMapa(void) {
-    for (int i = 0; i < quantidadeObjetos(); i++)
+    for (int i = 0; i < quantidadeObjetos(); i++) {
         objetos[i].coletado = false;
+    }
 }
 
 void liberarObjetosMapa(void) {
     for (int i = 0; i < quantidadeObjetos(); i++) {
-        if (objetos[i].textura.id)
+        if (objetos[i].textura.id) {
             UnloadTexture(objetos[i].textura);
+        }
 
         objetos[i].textura = (Texture2D){0};
     }
@@ -137,7 +195,8 @@ void desenharObjetosMapa(int sala) {
     for (int i = 0; i < quantidadeObjetos(); i++) {
         const ObjetoMapa *objeto = &objetos[i];
 
-        if (objeto->sala != sala || (objeto->coletavel && objeto->coletado) ||
+        if (objeto->sala != sala ||
+            (objeto->coletavel && objeto->coletado) ||
             !objeto->textura.id) {
             continue;
         }
@@ -156,38 +215,58 @@ void desenharObjetosMapa(int sala) {
             objeto->tamanho
         };
 
-        DrawTexturePro(objeto->textura, origem, destino, (Vector2){0, 0}, 0, WHITE);
+        DrawTexturePro(
+            objeto->textura,
+            origem,
+            destino,
+            (Vector2){0, 0},
+            0,
+            WHITE
+        );
     }
 }
 
 void desenharIndicacaoColeta(int sala, Vector2 personagem) {
     ObjetoMapa *objeto = encontrarObjetoProximo(sala, personagem);
 
-    if (!objeto)
+    if (!objeto) {
         return;
+    }
 
     const char *texto = "E - COLETAR";
+
     int larguraTexto = MeasureText(texto, 18);
     float larguraCaixa = (float)larguraTexto + 24.0f;
+
     float x = objeto->posicao.x - larguraCaixa / 2.0f;
     float y = objeto->posicao.y - objeto->tamanho / 2.0f - 34.0f;
 
-    if (x < 4)
+    if (x < 4) {
         x = 4;
+    }
 
-    if (x + larguraCaixa > LARGURA_MUNDO - 4)
+    if (x + larguraCaixa > LARGURA_MUNDO - 4) {
         x = LARGURA_MUNDO - larguraCaixa - 4;
+    }
 
     DrawRectangleRec(
         (Rectangle){x, y, larguraCaixa, 28},
         (Color){8, 8, 12, 225}
     );
+
     DrawRectangleLinesEx(
         (Rectangle){x, y, larguraCaixa, 28},
         2,
         (Color){220, 190, 125, 255}
     );
-    DrawText(texto, (int)x + 12, (int)y + 5, 18, RAYWHITE);
+
+    DrawText(
+        texto,
+        (int)x + 12,
+        (int)y + 5,
+        18,
+        RAYWHITE
+    );
 }
 
 bool coletarObjetoProximo(
@@ -196,42 +275,70 @@ bool coletarObjetoProximo(
     Inventario *inventario,
     int *idColetado
 ) {
-    if (!inventario)
+    if (!inventario) {
         return false;
+    }
 
     ObjetoMapa *objeto = encontrarObjetoProximo(sala, personagem);
 
-    if (!objeto)
+    if (!objeto) {
         return false;
+    }
 
     ResultadoInventario resultado;
 
     if (objeto->id == ID_FITA_17) {
-        resultado = inventarioAdicionarFita(inventario, ID_FITA_17, "A Chamada", 17, 4);
+        resultado = inventarioAdicionarFita(
+            inventario,
+            ID_FITA_17,
+            "A Chamada",
+            17,
+            4
+        );
     } else if (objeto->id == ID_FITA_42) {
-        resultado = inventarioAdicionarFita(inventario, ID_FITA_42, "O Corredor", 42, 1);
+        resultado = inventarioAdicionarFita(
+            inventario,
+            ID_FITA_42,
+            "O Corredor",
+            42,
+            1
+        );
     } else if (objeto->id == ID_FITA_89) {
-        resultado = inventarioAdicionarFita(inventario, ID_FITA_89, "Sala Vazia", 89, 7);
+        resultado = inventarioAdicionarFita(
+            inventario,
+            ID_FITA_89,
+            "Sala Vazia",
+            89,
+            7
+        );
     } else {
         resultado = inventarioAdicionarObjeto(
             inventario,
             objeto->id,
             objeto->nome,
             objeto->descricao,
-            objeto->id == ID_KIT_MEDICO || objeto->id == ID_BATERIA_FLASH
+            objeto->id == ID_KIT_MEDICO ||
+            objeto->id == ID_BATERIA_FLASH
         );
     }
 
     if (resultado != INVENTARIO_OK) {
-        TraceLog(LOG_WARNING, "Nao foi possivel guardar o objeto: %s", objeto->nome);
+        TraceLog(
+            LOG_WARNING,
+            "Nao foi possivel guardar o objeto: %s",
+            objeto->nome
+        );
+
         return false;
     }
 
     objeto->coletado = true;
 
-    if (idColetado)
+    if (idColetado) {
         *idColetado = objeto->id;
+    }
 
     TraceLog(LOG_INFO, "Objeto coletado: %s", objeto->nome);
+
     return true;
 }

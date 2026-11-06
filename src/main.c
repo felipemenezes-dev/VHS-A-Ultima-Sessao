@@ -1,4 +1,3 @@
-
 #include "raylib.h"
 #include "mundo.h"
 #include "colisoes.h"
@@ -225,7 +224,7 @@ static void mostrarLegendaObjeto(int idObjeto) {
 
         case 4:
             break;
-
+        
         default:
             break;
     }
