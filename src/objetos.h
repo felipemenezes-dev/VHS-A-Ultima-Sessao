@@ -10,6 +10,10 @@ enum IdentificadorObjeto {
     ID_CHAVE_ESTOQUE = 2,
     ID_FUSIVEL = 3,
     ID_BATERIA_FLASH = 4,
+    ID_QUADRO_ELETRICO = 5,
+    ID_BILHETE_GERENTE = 6,
+    ID_APARELHO_VHS = 7,
+    ID_TECLADO_SAIDA = 8,
     ID_FITA_17 = 17,
     ID_FITA_42 = 42,
     ID_FITA_89 = 89

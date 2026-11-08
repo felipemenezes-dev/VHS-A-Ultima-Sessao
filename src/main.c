@@ -2,6 +2,7 @@
 #include "mundo.h"
 #include "colisoes.h"
 #include "camadas.h"
+#include "inimigo.h"
 #include "interface_inventario.h"
 #include "objetos.h"
 #include <math.h>
@@ -389,6 +390,10 @@ int main(void) {
         erro = true;
     }
 
+    Inimigo inimigo = {0};
+    if (!erro && !iniciarInimigo(&inimigo, mascaras))
+        erro = true;
+
     TelaInventario inventario = {0};
 
     if (!erro && !iniciarTelaInventario(&inventario)) {
@@ -504,6 +509,9 @@ int main(void) {
             );
         }
 
+        if (IsKeyPressed(KEY_F7))
+            alternarInimigo(&inimigo, mascaras, salaAtual, personagem);
+
         bool mudouSala = false;
 
         if (!inventarioAberto) {
@@ -600,6 +608,8 @@ int main(void) {
                 }
             }
 
+            atualizarInimigo(&inimigo, mascaras, salaAtual, personagem, tempoQuadro);
+
             if (IsKeyPressed(KEY_E)) {
                 int idColetado = 0;
 
@@ -673,12 +683,12 @@ int main(void) {
             WHITE
         );
 
-        desenharJohnComCamadas(
-            cenarios[salaAtual],
-            personagemAtual,
-            salaAtual,
-            personagem
-        );
+        if (inimigo.ativo && inimigo.sala == salaAtual) {
+            desenharPersonagensComCamadas(personagemAtual, personagem,
+                imagemInimigo(&inimigo), inimigo.posicao, salaAtual);
+        } else {
+            desenharJohnComCamadas(cenarios[salaAtual], personagemAtual, salaAtual, personagem);
+        }
 
         desenharObjetosMapa(salaAtual);
 
@@ -804,6 +814,8 @@ int main(void) {
             }
         }
     }
+
+    liberarInimigo(&inimigo);
 
     liberarObjetosMapa();
 

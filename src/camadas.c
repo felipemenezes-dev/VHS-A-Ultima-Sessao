@@ -638,3 +638,39 @@ void desenharJohnComCamadas(Texture2D fundo, Texture2D john, int sala, Vector2 p
         }
     }
 }
+
+void desenharPersonagensComCamadas(Texture2D john, Vector2 posicaoJohn,
+    Texture2D inimigo, Vector2 posicaoInimigo, int sala) {
+    Texture2D imagens[] = {john, inimigo};
+    Vector2 posicoes[] = {posicaoJohn, posicaoInimigo};
+    if (posicaoJohn.y > posicaoInimigo.y) {
+        imagens[0] = inimigo;
+        imagens[1] = john;
+        posicoes[0] = posicaoInimigo;
+        posicoes[1] = posicaoJohn;
+    }
+    float profundidadeAnterior = -1;
+    for (int personagem = 0; personagem < 3; personagem++) {
+        float profundidade = personagem < 2 ? posicoes[personagem].y : INFINITY;
+        for (int indice = 0; indice < quantidadeCamadas; indice++) {
+            const Camada *camada = &camadas[indice];
+            if (camada->sala == sala && camada->profundidade > 0 &&
+                camada->profundidade > profundidadeAnterior && camada->profundidade <= profundidade)
+                DrawTextureV(camada->textura, camada->origem, WHITE);
+        }
+        if (personagem < 2) {
+            Texture2D imagem = imagens[personagem];
+            float largura = ALTURA_JOHN * imagem.width / imagem.height;
+            Rectangle destino = {posicoes[personagem].x - largura / 2,
+                posicoes[personagem].y - ALTURA_JOHN, largura, ALTURA_JOHN};
+            DrawTexturePro(imagem, (Rectangle){0, 0, imagem.width, imagem.height},
+                destino, (Vector2){0, 0}, 0, WHITE);
+        }
+        profundidadeAnterior = profundidade;
+    }
+    for (int indice = 0; indice < quantidadeCamadas; indice++) {
+        const Camada *camada = &camadas[indice];
+        if (camada->sala == sala && camada->profundidade == 0)
+            DrawTextureV(camada->textura, camada->origem, WHITE);
+    }
+}
