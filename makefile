@@ -18,4 +18,4 @@ executar run: build/vhs
 	./build/vhs
 
 clean limpar:
-	rm -f build/vhs
+	rm -rf build

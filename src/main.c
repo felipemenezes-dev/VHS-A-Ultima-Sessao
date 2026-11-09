@@ -5,11 +5,17 @@
 #include "inimigo.h"
 #include "interface_inventario.h"
 #include "objetos.h"
+#include "legendas.h"
+#include "menu.h"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "legendas.h"
+
+typedef enum {
+    ESTADO_MENU_TELA,
+    ESTADO_JOGO_TELA
+} EstadoJogoPrincipal;
 
 static Texture2D carregarImagemPersonagem(const char *caminho) {
     Image imagem = LoadImage(caminho);
@@ -272,6 +278,10 @@ int main(void) {
 
     bool erro = false;
 
+    if (!carregarMenu()) {
+        erro = true;
+    }
+
     for (int sala = 0; sala < NUM_CENARIOS; sala++) {
         cenarios[sala] = LoadTexture(
             salas[sala].imagem
@@ -416,11 +426,6 @@ int main(void) {
 
     if (!erro) {
         iniciarLegendas();
-
-        mostrarLegenda(
-            "A ULTIMA SESSAO AINDA NAO TERMINOU.",
-            5.0f
-        );
     }
 
     RenderTexture2D quadro = {0};
@@ -456,7 +461,28 @@ int main(void) {
     bool mostrarColisoes = false;
     bool andando = false;
 
+    EstadoJogoPrincipal estadoPrincipal = ESTADO_MENU_TELA;
+
     while (!erro && !WindowShouldClose()) {
+        if (estadoPrincipal == ESTADO_MENU_TELA) {
+            EstadoSubMenu retornoMenu = atualizarMenu();
+
+            if (retornoMenu == ESTADO_MENU_INICIAR_JOGO) {
+                estadoPrincipal = ESTADO_JOGO_TELA;
+                mostrarLegenda(
+                    "A ULTIMA SESSAO AINDA NAO TERMINOU.",
+                    5.0f
+                );
+            }
+
+            BeginDrawing();
+            ClearBackground(BLACK);
+            desenharMenu();
+            EndDrawing();
+
+            continue;
+        }
+
         float deltaLegendas = fminf(
             GetFrameTime(),
             0.25f
@@ -466,8 +492,11 @@ int main(void) {
 
         bool teclaEsc = IsKeyPressed(KEY_ESCAPE);
 
-        if (teclaEsc && !inventario.aberto)
-            break;
+        if (teclaEsc && !inventario.aberto) {
+            estadoPrincipal = ESTADO_MENU_TELA;
+            carregarMenu();
+            continue;
+        }
 
         bool teclaTab = IsKeyPressed(KEY_TAB);
 
@@ -658,8 +687,8 @@ int main(void) {
             printf(
                 "Ponto: X = %.2f%%, Y = %.2f%% | "
                 "Imagem: %.0f, %.0f\n",
-                100 * ponto.x / LARGURA_MUNDO,
-                100 * ponto.y / ALTURA_MUNDO,
+                100.0f * ponto.x / LARGURA_MUNDO,
+                100.0f * ponto.y / ALTURA_MUNDO,
                 ponto.x,
                 ponto.y
             );
@@ -777,6 +806,8 @@ int main(void) {
 
         EndDrawing();
     }
+
+    descarregarMenu();
 
     if (quadro.id)
         UnloadRenderTexture(quadro);
