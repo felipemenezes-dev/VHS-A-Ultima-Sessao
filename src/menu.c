@@ -114,8 +114,7 @@ EstadoSubMenu atualizarMenu(void) {
                 estadoAtual = ESTADO_MENU_CREDITOS;
                 break;
             case OPCAO_SAIR:
-                CloseWindow();
-                break;
+                return ESTADO_MENU_SAIR;
         }
     }
 
@@ -142,9 +141,9 @@ void desenharMenu(void) {
 
     if (estadoAtual == ESTADO_MENU_PRINCIPAL) {
         const char *opcoesTextos[TOTAL_OPCOES] = {
-            "1. INICIAR SESSÃO",
+            "1. INICIAR SESSÃƒO",
             "2. COMO JOGAR",
-            "3. CRÉDITOS",
+            "3. CRÃ‰DITOS",
             "4. SAIR"
         };
 
@@ -173,8 +172,8 @@ void desenharMenu(void) {
             {"W, A, S, D / Setas", "Movimentar John"},
             {"E", "Interagir"},
             {"F", "Usar o flash"},
-            {"Q", "Usar o kit médico"},
-            {"Tab", "Abrir inventário"},
+            {"Q", "Usar o kit mÃ©dico"},
+            {"Tab", "Abrir inventÃ¡rio"},
             {"Esc", "Pausar"}
         };
 
@@ -184,8 +183,8 @@ void desenharMenu(void) {
         }
 
         DrawText("OBJETIVO:", 80, 480, 20, RED);
-        DrawText("Recupere três fitas VHS, organize-as por", 80, 510, 18, RAYWHITE);
-        DrawText("frequência e escape da locadora com vida.", 80, 535, 18, RAYWHITE);
+        DrawText("Recupere trÃªs fitas VHS, organize-as por", 80, 510, 18, RAYWHITE);
+        DrawText("frequÃªncia e escape da locadora com vida.", 80, 535, 18, RAYWHITE);
 
         DrawText("Pressione ESC para voltar", 80, 590, 16, GRAY);
     } 
@@ -193,14 +192,14 @@ void desenharMenu(void) {
         DrawRectangle(60, 220, 680, 420, ColorAlpha(BLACK, 0.85f));
         DrawRectangleLinesEx((Rectangle){60, 220, 680, 420}, 2, RED);
 
-        DrawText("CRÉDITOS", 80, 240, 24, RED);
-        DrawText("Projeto Acadêmico Autoral", 80, 275, 18, GRAY);
+        DrawText("CRÃ‰DITOS", 80, 240, 24, RED);
+        DrawText("Projeto AcadÃªmico Autoral", 80, 275, 18, GRAY);
 
         DrawText("DESENVOLVEDORES:", 80, 320, 20, YELLOW);
         
         DrawText("1. Breno Pereira", 80, 355, 18, RAYWHITE);
         DrawText("2. Danilo Duleba", 80, 385, 18, RAYWHITE);
-        DrawText("3. Felipe Espínola", 80, 415, 18, RAYWHITE);
+        DrawText("3. Felipe EspÃ­nola", 80, 415, 18, RAYWHITE);
         DrawText("4. Rafael Borba", 80, 445, 18, RAYWHITE);
         DrawText("5. Walter Maia", 80, 475, 18, RAYWHITE);
 

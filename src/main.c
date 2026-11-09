@@ -3,19 +3,15 @@
 #include "colisoes.h"
 #include "camadas.h"
 #include "inimigo.h"
+#include "menu.h"
+#include "derrota.h"
 #include "interface_inventario.h"
 #include "objetos.h"
-#include "legendas.h"
-#include "menu.h"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-
-typedef enum {
-    ESTADO_MENU_TELA,
-    ESTADO_JOGO_TELA
-} EstadoJogoPrincipal;
+#include "legendas.h"
 
 static Texture2D carregarImagemPersonagem(const char *caminho) {
     Image imagem = LoadImage(caminho);
@@ -258,6 +254,8 @@ int main(void) {
     if (!IsWindowReady())
         return 1;
 
+    InitAudioDevice();
+
     SetExitKey(KEY_NULL);
     SetTargetFPS(60);
 
@@ -277,10 +275,6 @@ int main(void) {
     };
 
     bool erro = false;
-
-    if (!carregarMenu()) {
-        erro = true;
-    }
 
     for (int sala = 0; sala < NUM_CENARIOS; sala++) {
         cenarios[sala] = LoadTexture(
@@ -426,7 +420,15 @@ int main(void) {
 
     if (!erro) {
         iniciarLegendas();
+
+        mostrarLegenda(
+            "A ULTIMA SESSAO AINDA NAO TERMINOU.",
+            5.0f
+        );
     }
+
+    if (!erro && (!carregarMenu() || !carregarDerrota()))
+        erro = true;
 
     RenderTexture2D quadro = {0};
 
@@ -448,6 +450,7 @@ int main(void) {
 
     Vector2 personagem = salas[SALAO].entrada;
 
+    int vida = 100;
     int salaAtual = SALAO;
     int direcao = BAIXO;
     int quadroAnimacao = 0;
@@ -457,29 +460,55 @@ int main(void) {
 
     float esperaTransicao = 0;
     float escurecimento = 0;
+    float brilhoFlash = 0;
 
     bool mostrarColisoes = false;
     bool andando = false;
-
-    EstadoJogoPrincipal estadoPrincipal = ESTADO_MENU_TELA;
+    bool noMenu = true;
+    bool novaPartida = true;
 
     while (!erro && !WindowShouldClose()) {
-        if (estadoPrincipal == ESTADO_MENU_TELA) {
-            EstadoSubMenu retornoMenu = atualizarMenu();
-
-            if (retornoMenu == ESTADO_MENU_INICIAR_JOGO) {
-                estadoPrincipal = ESTADO_JOGO_TELA;
-                mostrarLegenda(
-                    "A ULTIMA SESSAO AINDA NAO TERMINOU.",
-                    5.0f
-                );
+        if (noMenu) {
+            atualizarSomInimigo(&inimigo, salaAtual, personagem, true);
+            EstadoSubMenu opcao = atualizarMenu();
+            if (opcao == ESTADO_MENU_SAIR)
+                break;
+            if (opcao == ESTADO_MENU_INICIAR_JOGO) {
+                if (novaPartida) {
+                    liberarTelaInventario(&inventario);
+                    iniciarTelaInventario(&inventario);
+                    reiniciarObjetosMapa();
+                    iniciarLegendas();
+                    personagem = salas[SALAO].entrada;
+                    salaAtual = SALAO;
+                    vida = 100;
+                    direcao = BAIXO;
+                    quadroAnimacao = 0;
+                    tempoAnimacao = 0;
+                    esperaTransicao = 0;
+                    escurecimento = 0;
+                    brilhoFlash = 0;
+                    andando = false;
+                    inimigo.ativo = false;
+                    mostrarLegenda("A ULTIMA SESSAO AINDA NAO TERMINOU.", 5.0f);
+                    novaPartida = false;
+                }
+                noMenu = false;
+                continue;
             }
-
             BeginDrawing();
             ClearBackground(BLACK);
             desenharMenu();
             EndDrawing();
+            continue;
+        }
 
+        if (vida == 0 && voltarAoMenu()) {
+            noMenu = true;
+            novaPartida = true;
+            iniciarLegendas();
+            if (!carregarMenu())
+                erro = true;
             continue;
         }
 
@@ -492,13 +521,14 @@ int main(void) {
 
         bool teclaEsc = IsKeyPressed(KEY_ESCAPE);
 
-        if (teclaEsc && !inventario.aberto) {
-            estadoPrincipal = ESTADO_MENU_TELA;
-            carregarMenu();
+        if (vida > 0 && teclaEsc && !inventario.aberto) {
+            noMenu = true;
+            if (!carregarMenu())
+                erro = true;
             continue;
         }
 
-        bool teclaTab = IsKeyPressed(KEY_TAB);
+        bool teclaTab = vida > 0 && IsKeyPressed(KEY_TAB);
 
         bool inventarioAberto = atualizarTelaInventario(
             &inventario,
@@ -538,12 +568,12 @@ int main(void) {
             );
         }
 
-        if (IsKeyPressed(KEY_F7))
+        if (vida > 0 && IsKeyPressed(KEY_F7))
             alternarInimigo(&inimigo, mascaras, salaAtual, personagem);
 
         bool mudouSala = false;
 
-        if (!inventarioAberto) {
+        if (!inventarioAberto && vida > 0) {
             float tempoQuadro = fminf(
                 GetFrameTime(),
                 0.25f
@@ -596,7 +626,7 @@ int main(void) {
 
                 Vector2 posicaoAnterior = personagem;
 
-                personagem = moverComColisao(
+                personagem = moverComPersonagem(
                     &mascaras[salaAtual],
                     personagem,
                     (Vector2){
@@ -607,7 +637,9 @@ int main(void) {
                         movimento.y *
                         VELOCIDADE_JOHN *
                         tempoQuadro
-                    }
+                    },
+                    inimigo.ativo && inimigo.sala == salaAtual,
+                    inimigo.posicao
                 );
 
                 andando = hypotf(
@@ -637,10 +669,16 @@ int main(void) {
                 }
             }
 
-            atualizarInimigo(&inimigo, mascaras, salaAtual, personagem, tempoQuadro);
+            brilhoFlash = fmaxf(0, brilhoFlash - tempoQuadro);
+            if (IsKeyPressed(KEY_F) && usarFlash(&inimigo, mascaras, salaAtual, personagem))
+                brilhoFlash = 0.2f;
+
+            atualizarInimigo(&inimigo, mascaras, salaAtual, personagem,
+                inventarioContarFitas(&inventario.dados), tempoQuadro);
 
             if (IsKeyPressed(KEY_E)) {
                 int idColetado = 0;
+                int fitasAntes = inventarioContarFitas(&inventario.dados);
 
                 if (coletarObjetoProximo(
                     salaAtual,
@@ -649,8 +687,17 @@ int main(void) {
                     &idColetado
                 )) {
                     mostrarLegendaObjeto(idColetado);
+                    if (!inimigo.ativo && fitasAntes == 0 &&
+                        inventarioContarFitas(&inventario.dados) > 0) {
+                        alternarInimigo(&inimigo, mascaras, salaAtual, personagem);
+                    }
                 }
             }
+
+            atacarJohn(&inimigo, mascaras, salaAtual, personagem,
+                inventarioContarFitas(&inventario.dados), tempoQuadro, &vida);
+            if (vida == 0)
+                andando = false;
 
             if (andando) {
                 tempoAnimacao += tempoQuadro;
@@ -687,14 +734,16 @@ int main(void) {
             printf(
                 "Ponto: X = %.2f%%, Y = %.2f%% | "
                 "Imagem: %.0f, %.0f\n",
-                100.0f * ponto.x / LARGURA_MUNDO,
-                100.0f * ponto.y / ALTURA_MUNDO,
+                100 * ponto.x / LARGURA_MUNDO,
+                100 * ponto.y / ALTURA_MUNDO,
                 ponto.x,
                 ponto.y
             );
 
             fflush(stdout);
         }
+
+        atualizarSomInimigo(&inimigo, salaAtual, personagem, inventarioAberto || vida == 0);
 
         Texture2D personagemAtual =
             andando && !mudouSala
@@ -743,7 +792,7 @@ int main(void) {
             18,
             16,
             320,
-            64,
+            94,
             (Color){6, 8, 14, 195}
         );
 
@@ -766,7 +815,9 @@ int main(void) {
             GOLD
         );
 
-        if (!inventarioAberto) {
+        DrawText(TextFormat("VIDA: %d / 100", vida), 30, 80, 18, RED);
+
+        if (!inventarioAberto && vida > 0) {
             desenharIndicacaoColeta(
                 salaAtual,
                 personagem
@@ -778,6 +829,12 @@ int main(void) {
             LARGURA_MUNDO,
             ALTURA_MUNDO
         );
+
+        if (brilhoFlash > 0)
+            DrawRectangle(0, 0, LARGURA_MUNDO, ALTURA_MUNDO, Fade(WHITE, brilhoFlash * 3));
+
+        if (vida == 0)
+            desenharDerrota();
 
         EndTextureMode();
 
@@ -802,12 +859,11 @@ int main(void) {
             WHITE
         );
 
-        desenharLegendas();
+        if (vida > 0)
+            desenharLegendas();
 
         EndDrawing();
     }
-
-    descarregarMenu();
 
     if (quadro.id)
         UnloadRenderTexture(quadro);
@@ -846,6 +902,8 @@ int main(void) {
         }
     }
 
+    descarregarMenu();
+    descarregarDerrota();
     liberarInimigo(&inimigo);
 
     liberarObjetosMapa();
@@ -858,6 +916,8 @@ int main(void) {
 
     liberarLegendas();
 
+    if (IsAudioDeviceReady())
+        CloseAudioDevice();
     CloseWindow();
 
     return erro ? 1 : 0;
