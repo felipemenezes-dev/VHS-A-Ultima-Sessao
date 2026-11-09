@@ -140,11 +140,6 @@ void desenharMenu(void) {
         DrawRectangle(0, yRuido, GetScreenWidth(), 2, ColorAlpha(RED, 0.15f));
     }
 
-    const char *subtitulo = "A ÚLTIMA SESSÃO";
-    
-    DrawText(subtitulo, 80, 145, 28, RAYWHITE);
-    DrawLineEx((Vector2){80, 185}, (Vector2){420, 185}, 3.0f, RED);
-
     if (estadoAtual == ESTADO_MENU_PRINCIPAL) {
         const char *opcoesTextos[TOTAL_OPCOES] = {
             "1. INICIAR SESSÃO",
