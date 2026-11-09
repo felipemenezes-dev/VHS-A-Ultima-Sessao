@@ -6,6 +6,9 @@
 #include "menu.h"
 #include "derrota.h"
 #include "interface_inventario.h"
+#include "interface_vhs.h"
+#include "interface_teclado.h"
+#include "estado_jogo.h"
 #include "objetos.h"
 #include <math.h>
 #include <stdio.h>
@@ -13,25 +16,31 @@
 #include <unistd.h>
 #include "legendas.h"
 
+
 static Texture2D carregarImagemPersonagem(const char *caminho) {
     Image imagem = LoadImage(caminho);
     Texture2D textura = {0};
+
 
     if (imagem.data) {
         ImageAlphaCrop(&imagem, 0.05f);
         textura = LoadTextureFromImage(imagem);
         UnloadImage(imagem);
 
+
         if (textura.id)
             SetTextureFilter(textura, TEXTURE_FILTER_POINT);
     }
 
+
     return textura;
 }
+
 
 static void localizarRecursos(void) {
     if (FileExists("assets/cenarios/salao_principal.png"))
         return;
+
 
     char caminho[4096];
     ssize_t quantidade = readlink(
@@ -40,22 +49,28 @@ static void localizarRecursos(void) {
         sizeof caminho - 1
     );
 
+
     if (quantidade <= 0)
         return;
+
 
     caminho[quantidade] = '\0';
     char *barra = strrchr(caminho, '/');
 
+
     if (!barra)
         return;
 
+
     *barra = '\0';
+
 
     if (ChangeDirectory(caminho) &&
         !FileExists("assets/cenarios/salao_principal.png")) {
         ChangeDirectory("..");
     }
 }
+
 
 static void desenharDepuracao(
     int sala,
@@ -69,13 +84,16 @@ static void desenharDepuracao(
         (Color){125, 255, 150, 210}
     );
 
+
     DrawRectangleLinesEx(
         caixaPes(personagem),
         2,
         YELLOW
     );
 
+
     const LimiteChao *chao = &limitesChao[sala];
+
 
     for (int i = 0; i < chao->quantidade; i++) {
         DrawLineEx(
@@ -86,8 +104,10 @@ static void desenharDepuracao(
         );
     }
 
+
     for (int i = 0; i < quantidadePortas; i++) {
         const Porta *porta = &portas[i];
+
 
         if (porta->origem == sala) {
             DrawRectangleLinesEx(
@@ -96,6 +116,7 @@ static void desenharDepuracao(
                 SKYBLUE
             );
 
+
             DrawText(
                 TextFormat("Porta %d: %s", i, porta->rotulo),
                 (int)porta->area.x,
@@ -103,6 +124,7 @@ static void desenharDepuracao(
                 20,
                 SKYBLUE
             );
+
 
             if (porta->limiteA.x != 0) {
                 DrawLineEx(
@@ -114,6 +136,7 @@ static void desenharDepuracao(
             }
         }
 
+
         if (porta->destino == sala) {
             DrawCircleLines(
                 porta->chegada.x,
@@ -121,6 +144,7 @@ static void desenharDepuracao(
                 18,
                 YELLOW
             );
+
 
             DrawText(
                 TextFormat("Entrada %d", i),
@@ -132,6 +156,7 @@ static void desenharDepuracao(
         }
     }
 
+
     DrawRectangle(
         20,
         90,
@@ -140,6 +165,7 @@ static void desenharDepuracao(
         (Color){6, 8, 14, 230}
     );
 
+
     DrawText(
         "F1 - MOSTRAR COLISOES",
         34,
@@ -147,6 +173,7 @@ static void desenharDepuracao(
         22,
         YELLOW
     );
+
 
     DrawText(
         TextFormat(
@@ -162,6 +189,7 @@ static void desenharDepuracao(
         RAYWHITE
     );
 
+
     DrawText(
         "Roxo: limite do piso",
         34,
@@ -169,6 +197,7 @@ static void desenharDepuracao(
         18,
         VIOLET
     );
+
 
     DrawText(
         "Azul: passagem | Amarelo: entrada",
@@ -179,10 +208,12 @@ static void desenharDepuracao(
     );
 }
 
+
 static void mostrarLegendaObjeto(int idObjeto) {
     switch (idObjeto) {
         case 1:
             break;
+
 
         case 17:
             mostrarLegenda(
@@ -194,12 +225,14 @@ static void mostrarLegendaObjeto(int idObjeto) {
             );
             break;
 
+
         case 2:
             mostrarLegenda(
                 "CHAVE DO ESTOQUE ENCONTRADA.",
                 3.0f
             );
             break;
+
 
         case 42:
             mostrarLegenda(
@@ -208,12 +241,14 @@ static void mostrarLegendaObjeto(int idObjeto) {
             );
             break;
 
+
         case 3:
             mostrarLegenda(
                 "FUSIVEL ENCONTRADO.",
                 3.0f
             );
             break;
+
 
         case 89:
             mostrarLegenda(
@@ -225,25 +260,30 @@ static void mostrarLegendaObjeto(int idObjeto) {
             );
             break;
 
+
         case 4:
             break;
-        
+       
         default:
             break;
     }
 }
 
+
 int main(void) {
     localizarRecursos();
+
 
     int monitor = GetCurrentMonitor();
     int larguraTela = GetMonitorWidth(monitor);
     int alturaTela = GetMonitorHeight(monitor);
 
+
     SetConfigFlags(
         FLAG_FULLSCREEN_MODE |
         FLAG_VSYNC_HINT
     );
+
 
     InitWindow(
         larguraTela,
@@ -251,21 +291,28 @@ int main(void) {
         "VHS - A Ultima Sessao"
     );
 
+
     if (!IsWindowReady())
         return 1;
 
+
     InitAudioDevice();
+
 
     SetExitKey(KEY_NULL);
     SetTargetFPS(60);
 
+
     Texture2D cenarios[NUM_CENARIOS] = {0};
     Texture2D texturasMascaras[NUM_CENARIOS] = {0};
 
+
     MapaColisao mascaras[NUM_CENARIOS] = {0};
+
 
     Texture2D animacoes[NUM_DIRECOES][NUM_QUADROS] = {0};
     Texture2D personagemParado[NUM_DIRECOES] = {0};
+
 
     const char *pastas[NUM_DIRECOES] = {
         "baixo",
@@ -274,16 +321,20 @@ int main(void) {
         "esquerda"
     };
 
+
     bool erro = false;
+
 
     for (int sala = 0; sala < NUM_CENARIOS; sala++) {
         cenarios[sala] = LoadTexture(
             salas[sala].imagem
         );
 
+
         texturasMascaras[sala] = LoadTexture(
             salas[sala].mascara
         );
+
 
         if (
             !cenarios[sala].id ||
@@ -298,12 +349,14 @@ int main(void) {
                 salas[sala].nome
             );
 
+
             erro = true;
         } else {
             SetTextureFilter(
                 cenarios[sala],
                 TEXTURE_FILTER_POINT
             );
+
 
             SetTextureFilter(
                 texturasMascaras[sala],
@@ -312,8 +365,10 @@ int main(void) {
         }
     }
 
+
     for (int direcao = 0; direcao < NUM_DIRECOES; direcao++) {
         char caminho[256];
+
 
         snprintf(
             caminho,
@@ -324,11 +379,14 @@ int main(void) {
             pastas[direcao]
         );
 
+
         personagemParado[direcao] =
             carregarImagemPersonagem(caminho);
 
+
         if (!personagemParado[direcao].id)
             erro = true;
+
 
         for (int quadro = 0; quadro < NUM_QUADROS; quadro++) {
             snprintf(
@@ -341,17 +399,21 @@ int main(void) {
                 quadro + 1
             );
 
+
             animacoes[direcao][quadro] =
                 carregarImagemPersonagem(caminho);
+
 
             if (!animacoes[direcao][quadro].id)
                 erro = true;
         }
     }
 
+
     for (int sala = 0;
          sala < NUM_CENARIOS && !erro;
          sala++) {
+
 
         if (pesBloqueados(
             &mascaras[sala],
@@ -363,13 +425,16 @@ int main(void) {
                 salas[sala].nome
             );
 
+
             erro = true;
         }
     }
 
+
     for (int i = 0;
          i < quantidadePortas && !erro;
          i++) {
+
 
         if (pesBloqueados(
             &mascaras[portas[i].destino],
@@ -381,9 +446,11 @@ int main(void) {
                 i
             );
 
+
             erro = true;
         }
     }
+
 
     if (!erro && !iniciarCamadas()) {
         TraceLog(
@@ -391,14 +458,25 @@ int main(void) {
             "Nao foi possivel preparar as camadas visuais"
         );
 
+
         erro = true;
     }
+
 
     Inimigo inimigo = {0};
     if (!erro && !iniciarInimigo(&inimigo, mascaras))
         erro = true;
 
+
     TelaInventario inventario = {0};
+    EstadoJogo estadoJogo = {0};
+    InterfaceVHS interfaceVHS = {0};
+    TecladoSaida tecladoSaida = {0};
+
+    reiniciarEstadoJogo(&estadoJogo);
+    iniciarInterfaceVHS(&interfaceVHS);
+    iniciarTecladoSaida(&tecladoSaida);
+
 
     if (!erro && !iniciarTelaInventario(&inventario)) {
         TraceLog(
@@ -406,8 +484,10 @@ int main(void) {
             "Nao foi possivel iniciar o inventario"
         );
 
+
         erro = true;
     }
+
 
     if (!erro && !carregarObjetosMapa()) {
         TraceLog(
@@ -415,11 +495,14 @@ int main(void) {
             "Nao foi possivel carregar os objetos do cenario"
         );
 
+
         erro = true;
     }
 
+
     if (!erro) {
         iniciarLegendas();
+
 
         mostrarLegenda(
             "A ULTIMA SESSAO AINDA NAO TERMINOU.",
@@ -427,16 +510,20 @@ int main(void) {
         );
     }
 
+
     if (!erro && (!carregarMenu() || !carregarDerrota()))
         erro = true;
 
+
     RenderTexture2D quadro = {0};
+
 
     if (!erro) {
         quadro = LoadRenderTexture(
             LARGURA_MUNDO,
             ALTURA_MUNDO
         );
+
 
         if (!quadro.id) {
             erro = true;
@@ -448,24 +535,32 @@ int main(void) {
         }
     }
 
+
     Vector2 personagem = salas[SALAO].entrada;
+
 
     int vida = 100;
     int salaAtual = SALAO;
     int direcao = BAIXO;
     int quadroAnimacao = 0;
 
+
     float tempoAnimacao = 0;
     float duracaoQuadro = 0.11f;
 
+
     float esperaTransicao = 0;
+    float esperaAvisoPorta = 0;
     float escurecimento = 0;
     float brilhoFlash = 0;
+
 
     bool mostrarColisoes = false;
     bool andando = false;
     bool noMenu = true;
     bool novaPartida = true;
+    bool jogoConcluido = false;
+
 
     while (!erro && !WindowShouldClose()) {
         if (noMenu) {
@@ -478,6 +573,9 @@ int main(void) {
                     liberarTelaInventario(&inventario);
                     iniciarTelaInventario(&inventario);
                     reiniciarObjetosMapa();
+                    reiniciarEstadoJogo(&estadoJogo);
+                    iniciarInterfaceVHS(&interfaceVHS);
+                    iniciarTecladoSaida(&tecladoSaida);
                     iniciarLegendas();
                     personagem = salas[SALAO].entrada;
                     salaAtual = SALAO;
@@ -486,9 +584,11 @@ int main(void) {
                     quadroAnimacao = 0;
                     tempoAnimacao = 0;
                     esperaTransicao = 0;
+                    esperaAvisoPorta = 0;
                     escurecimento = 0;
                     brilhoFlash = 0;
                     andando = false;
+                    jogoConcluido = false;
                     inimigo.ativo = false;
                     mostrarLegenda("A ULTIMA SESSAO AINDA NAO TERMINOU.", 5.0f);
                     novaPartida = false;
@@ -503,6 +603,7 @@ int main(void) {
             continue;
         }
 
+
         if (vida == 0 && voltarAoMenu()) {
             noMenu = true;
             novaPartida = true;
@@ -512,29 +613,50 @@ int main(void) {
             continue;
         }
 
+
         float deltaLegendas = fminf(
             GetFrameTime(),
             0.25f
         );
 
+
         atualizarLegendas(deltaLegendas);
 
+
+        bool interfaceVHSJaAberta = interfaceVHSEstaAberta(&interfaceVHS);
+        bool tecladoJaAberto = tecladoSaidaEstaAberto(&tecladoSaida);
         bool teclaEsc = IsKeyPressed(KEY_ESCAPE);
 
-        if (vida > 0 && teclaEsc && !inventario.aberto) {
+
+        if (vida > 0 && teclaEsc && !inventario.aberto &&
+            !interfaceVHSJaAberta && !tecladoJaAberto) {
             noMenu = true;
             if (!carregarMenu())
                 erro = true;
             continue;
         }
 
-        bool teclaTab = vida > 0 && IsKeyPressed(KEY_TAB);
 
-        bool inventarioAberto = atualizarTelaInventario(
-            &inventario,
-            teclaTab,
-            teclaEsc
-        );
+        if (interfaceVHSJaAberta)
+            atualizarInterfaceVHS(&interfaceVHS, &inventario.dados, deltaLegendas);
+
+        if (tecladoJaAberto)
+            atualizarTecladoSaida(&tecladoSaida, deltaLegendas);
+
+
+        bool interfaceVHSAberta = interfaceVHSEstaAberta(&interfaceVHS);
+        bool tecladoAberto = tecladoSaidaEstaAberto(&tecladoSaida);
+        bool teclaTab = vida > 0 && !interfaceVHSAberta && !tecladoAberto &&
+                        IsKeyPressed(KEY_TAB);
+
+
+        bool inventarioAberto = (interfaceVHSAberta || tecladoAberto) ? false :
+            atualizarTelaInventario(
+                &inventario,
+                teclaTab,
+                teclaEsc
+            );
+
 
         if (inventario.aberto && !teclaTab) {
             int passoX =
@@ -543,11 +665,13 @@ int main(void) {
                 (IsKeyPressed(KEY_LEFT) ||
                  IsKeyPressed(KEY_A));
 
+
             int passoY =
                 (IsKeyPressed(KEY_DOWN) ||
                  IsKeyPressed(KEY_S)) -
                 (IsKeyPressed(KEY_UP) ||
                  IsKeyPressed(KEY_W));
+
 
             Vector2 cursor = telaParaMundo(
                 GetMousePosition(),
@@ -556,6 +680,7 @@ int main(void) {
                     GetScreenHeight()
                 )
             );
+
 
             selecionarEspacoInventario(
                 &inventario,
@@ -568,42 +693,56 @@ int main(void) {
             );
         }
 
-        if (vida > 0 && IsKeyPressed(KEY_F7))
+
+        if (vida > 0 && !tecladoAberto && IsKeyPressed(KEY_F7))
             alternarInimigo(&inimigo, mascaras, salaAtual, personagem);
+
 
         bool mudouSala = false;
 
-        if (!inventarioAberto && vida > 0) {
+
+        if (!inventarioAberto && !interfaceVHSAberta && !tecladoAberto &&
+            !jogoConcluido && vida > 0) {
             float tempoQuadro = fminf(
                 GetFrameTime(),
                 0.25f
             );
 
+
             esperaTransicao = fmaxf(
                 0,
                 esperaTransicao - tempoQuadro
             );
+            esperaAvisoPorta = fmaxf(0, esperaAvisoPorta - tempoQuadro);
+
 
             escurecimento = fmaxf(
                 0,
                 escurecimento - tempoQuadro
             );
 
+
             Vector2 movimento = {0};
+
 
             if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))
                 movimento.x -= 1;
 
+
             if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
                 movimento.x += 1;
+
 
             if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))
                 movimento.y -= 1;
 
+
             if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))
                 movimento.y += 1;
 
+
             andando = false;
+
 
             if (movimento.x != 0 || movimento.y != 0) {
                 if (fabsf(movimento.y) > fabsf(movimento.x)) {
@@ -616,15 +755,19 @@ int main(void) {
                         : DIREITA;
                 }
 
+
                 float comprimento = hypotf(
                     movimento.x,
                     movimento.y
                 );
 
+
                 movimento.x /= comprimento;
                 movimento.y /= comprimento;
 
+
                 Vector2 posicaoAnterior = personagem;
+
 
                 personagem = moverComPersonagem(
                     &mascaras[salaAtual],
@@ -634,6 +777,7 @@ int main(void) {
                         VELOCIDADE_JOHN *
                         tempoQuadro,
 
+
                         movimento.y *
                         VELOCIDADE_JOHN *
                         tempoQuadro
@@ -642,22 +786,44 @@ int main(void) {
                     inimigo.posicao
                 );
 
+
                 andando = hypotf(
                     personagem.x - posicaoAnterior.x,
                     personagem.y - posicaoAnterior.y
                 ) > 0.01f;
 
-                mudouSala = trocarSala(
-                    &salaAtual,
-                    &personagem,
-                    &direcao,
-                    movimento,
-                    &esperaTransicao
-                );
+
+                int indicePorta = encontrarPorta(salaAtual, personagem, movimento);
+                bool portaBloqueada = indicePorta >= 0 &&
+                    !estadoJogoPodeEntrarSala(&estadoJogo, portas[indicePorta].destino);
+
+                if (portaBloqueada) {
+                    personagem = posicaoAnterior;
+                    andando = false;
+
+                    if (esperaAvisoPorta <= 0) {
+                        if (portas[indicePorta].destino == ESTOQUE) {
+                            mostrarLegenda("PORTA TRANCADA. ENCONTRE A CHAVE DO ESTOQUE.", 2.5f);
+                        } else if (portas[indicePorta].destino == SALA_PROJECAO) {
+                            mostrarLegenda("PORTA TRANCADA. INSTALE O FUSIVEL NO QUADRO ELETRICO.", 2.5f);
+                        }
+                        esperaAvisoPorta = 2.5f;
+                    }
+                } else {
+                    mudouSala = trocarSala(
+                        &salaAtual,
+                        &personagem,
+                        &direcao,
+                        movimento,
+                        &esperaTransicao
+                    );
+                }
+
 
                 if (mudouSala) {
                     escurecimento = 0.14f;
                     andando = false;
+
 
                     TraceLog(
                         LOG_INFO,
@@ -669,41 +835,74 @@ int main(void) {
                 }
             }
 
+
             brilhoFlash = fmaxf(0, brilhoFlash - tempoQuadro);
             if (IsKeyPressed(KEY_F) && usarFlash(&inimigo, mascaras, salaAtual, personagem))
                 brilhoFlash = 0.2f;
 
+
             atualizarInimigo(&inimigo, mascaras, salaAtual, personagem,
                 inventarioContarFitas(&inventario.dados), tempoQuadro);
 
-            if (IsKeyPressed(KEY_E)) {
-                int idColetado = 0;
-                int fitasAntes = inventarioContarFitas(&inventario.dados);
 
-                if (coletarObjetoProximo(
-                    salaAtual,
-                    personagem,
-                    &inventario.dados,
-                    &idColetado
-                )) {
-                    mostrarLegendaObjeto(idColetado);
-                    if (!inimigo.ativo && fitasAntes == 0 &&
-                        inventarioContarFitas(&inventario.dados) > 0) {
-                        alternarInimigo(&inimigo, mascaras, salaAtual, personagem);
+            if (IsKeyPressed(KEY_E) && !interfaceVHSJaAberta &&
+                !tecladoJaAberto && !jogoConcluido) {
+                if (tecladoSaidaProximo(salaAtual, personagem)) {
+                    abrirTecladoSaida(
+                        &tecladoSaida,
+                        interfaceVHSCodigo(&interfaceVHS)
+                    );
+                } else if (aparelhoVhsProximo(salaAtual, personagem)) {
+                    abrirInterfaceVHS(&interfaceVHS);
+                } else if (quadroEletricoProximo(salaAtual, personagem)) {
+                    if (estadoJogoInstalarFusivel(&estadoJogo, &inventario.dados)) {
+                        marcarObjetoConcluido(ID_QUADRO_ELETRICO);
+                        mostrarLegenda("FUSIVEL INSTALADO. A ENERGIA DA SALA DE PROJECAO FOI RESTAURADA.", 3.5f);
+                    } else if (estadoJogo.fusivelInstalado) {
+                        mostrarLegenda("O FUSIVEL JA ESTA INSTALADO.", 2.5f);
+                    } else {
+                        mostrarLegenda("VOCE PRECISA ENCONTRAR O FUSIVEL ANTES.", 2.5f);
+                    }
+                } else {
+                    int idColetado = 0;
+                    int fitasAntes = inventarioContarFitas(&inventario.dados);
+
+                    if (coletarObjetoProximo(
+                        salaAtual,
+                        personagem,
+                        &inventario.dados,
+                        &idColetado
+                    )) {
+                        registrarObjetoColetado(&estadoJogo, idColetado);
+                        mostrarLegendaObjeto(idColetado);
+                        if (!inimigo.ativo && fitasAntes == 0 &&
+                            inventarioContarFitas(&inventario.dados) > 0) {
+                            alternarInimigo(&inimigo, mascaras, salaAtual, personagem);
+                        }
                     }
                 }
             }
+
+            tecladoAberto = tecladoSaidaEstaAberto(&tecladoSaida);
+            if (!tecladoAberto && tecladoSaidaEstaLiberado(&tecladoSaida) &&
+                portaSaidaProxima(salaAtual, personagem)) {
+                jogoConcluido = true;
+            }
+
 
             atacarJohn(&inimigo, mascaras, salaAtual, personagem,
                 inventarioContarFitas(&inventario.dados), tempoQuadro, &vida);
             if (vida == 0)
                 andando = false;
 
+
             if (andando) {
                 tempoAnimacao += tempoQuadro;
 
+
                 while (tempoAnimacao >= duracaoQuadro) {
                     tempoAnimacao -= duracaoQuadro;
+
 
                     quadroAnimacao =
                         (quadroAnimacao + 1) %
@@ -714,12 +913,16 @@ int main(void) {
                 tempoAnimacao = 0;
             }
 
+
             if (IsKeyPressed(KEY_F1))
                 mostrarColisoes = !mostrarColisoes;
         }
 
+
         if (
             !inventarioAberto &&
+            !interfaceVHSAberta &&
+            !tecladoAberto &&
             mostrarColisoes &&
             IsMouseButtonPressed(MOUSE_BUTTON_LEFT)
         ) {
@@ -731,6 +934,7 @@ int main(void) {
                 )
             );
 
+
             printf(
                 "Ponto: X = %.2f%%, Y = %.2f%% | "
                 "Imagem: %.0f, %.0f\n",
@@ -740,19 +944,34 @@ int main(void) {
                 ponto.y
             );
 
+
             fflush(stdout);
         }
 
-        atualizarSomInimigo(&inimigo, salaAtual, personagem, inventarioAberto || vida == 0);
+
+        if (jogoConcluido && IsKeyPressed(KEY_ENTER)) {
+            noMenu = true;
+            novaPartida = true;
+            if (!carregarMenu())
+                erro = true;
+            continue;
+        }
+
+        atualizarSomInimigo(&inimigo, salaAtual, personagem,
+            inventarioAberto || interfaceVHSAberta || tecladoAberto || jogoConcluido || vida == 0);
+
 
         Texture2D personagemAtual =
             andando && !mudouSala
             ? animacoes[direcao][quadroAnimacao]
             : personagemParado[direcao];
 
+
         BeginTextureMode(quadro);
 
+
         ClearBackground(BLACK);
+
 
         DrawTexture(
             cenarios[salaAtual],
@@ -761,6 +980,7 @@ int main(void) {
             WHITE
         );
 
+
         if (inimigo.ativo && inimigo.sala == salaAtual) {
             desenharPersonagensComCamadas(personagemAtual, personagem,
                 imagemInimigo(&inimigo), inimigo.posicao, salaAtual);
@@ -768,7 +988,9 @@ int main(void) {
             desenharJohnComCamadas(cenarios[salaAtual], personagemAtual, salaAtual, personagem);
         }
 
+
         desenharObjetosMapa(salaAtual);
+
 
         if (escurecimento > 0) {
             DrawRectangle(
@@ -780,6 +1002,7 @@ int main(void) {
             );
         }
 
+
         if (mostrarColisoes) {
             desenharDepuracao(
                 salaAtual,
@@ -787,6 +1010,7 @@ int main(void) {
                 texturasMascaras[salaAtual]
             );
         }
+
 
         DrawRectangle(
             18,
@@ -796,6 +1020,7 @@ int main(void) {
             (Color){6, 8, 14, 195}
         );
 
+
         DrawText(
             salas[salaAtual].nome,
             30,
@@ -803,6 +1028,7 @@ int main(void) {
             20,
             RAYWHITE
         );
+
 
         DrawText(
             TextFormat(
@@ -815,14 +1041,18 @@ int main(void) {
             GOLD
         );
 
+
         DrawText(TextFormat("VIDA: %d / 100", vida), 30, 80, 18, RED);
 
-        if (!inventarioAberto && vida > 0) {
+
+        if (!inventarioAberto && !interfaceVHSAberta && !tecladoAberto &&
+            !jogoConcluido && vida > 0) {
             desenharIndicacaoColeta(
                 salaAtual,
                 personagem
             );
         }
+
 
         desenharInventario(
             &inventario,
@@ -830,17 +1060,34 @@ int main(void) {
             ALTURA_MUNDO
         );
 
+        desenharInterfaceVHS(&interfaceVHS, &inventario.dados);
+        desenharTecladoSaida(&tecladoSaida);
+
+        if (jogoConcluido) {
+            DrawRectangle(0, 0, LARGURA_MUNDO, ALTURA_MUNDO, (Color){0, 0, 0, 220});
+            DrawRectangle(350, 300, 972, 330, (Color){8, 10, 16, 250});
+            DrawRectangleLinesEx((Rectangle){350, 300, 972, 330}, 4, GOLD);
+            DrawText("VOCE ESCAPOU", 575, 370, 58, GOLD);
+            DrawText("A ULTIMA SESSAO FINALMENTE TERMINOU.", 485, 465, 28, RAYWHITE);
+            DrawText("PRESSIONE ENTER PARA VOLTAR AO MENU", 500, 550, 22, LIGHTGRAY);
+        }
+
         if (brilhoFlash > 0)
             DrawRectangle(0, 0, LARGURA_MUNDO, ALTURA_MUNDO, Fade(WHITE, brilhoFlash * 3));
+
 
         if (vida == 0)
             desenharDerrota();
 
+
         EndTextureMode();
+
 
         BeginDrawing();
 
+
         ClearBackground(BLACK);
+
 
         DrawTexturePro(
             quadro.texture,
@@ -859,24 +1106,31 @@ int main(void) {
             WHITE
         );
 
+
         if (vida > 0)
             desenharLegendas();
+
 
         EndDrawing();
     }
 
+
     if (quadro.id)
         UnloadRenderTexture(quadro);
+
 
     for (int sala = 0; sala < NUM_CENARIOS; sala++) {
         if (cenarios[sala].id)
             UnloadTexture(cenarios[sala]);
 
+
         if (texturasMascaras[sala].id)
             UnloadTexture(texturasMascaras[sala]);
 
+
         liberarColisoes(&mascaras[sala]);
     }
+
 
     for (
         int direcaoSprite = 0;
@@ -888,6 +1142,7 @@ int main(void) {
                 personagemParado[direcaoSprite]
             );
         }
+
 
         for (
             int quadroSprite = 0;
@@ -902,23 +1157,33 @@ int main(void) {
         }
     }
 
+
     descarregarMenu();
     descarregarDerrota();
     liberarInimigo(&inimigo);
 
+
     liberarObjetosMapa();
+
 
     liberarTelaInventario(
         &inventario
     );
 
+
     liberarCamadas();
 
+
     liberarLegendas();
+
 
     if (IsAudioDeviceReady())
         CloseAudioDevice();
     CloseWindow();
 
+
     return erro ? 1 : 0;
 }
+
+
+

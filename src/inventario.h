@@ -1,3 +1,4 @@
+
 #ifndef VHS_INVENTARIO_H
 #define VHS_INVENTARIO_H
 
@@ -10,7 +11,8 @@
 typedef enum {
     OBJETO_VAZIO,
     OBJETO_GUARDADO,
-    OBJETO_USADO
+    OBJETO_USADO,
+    OBJETO_INSTALADO
 } EstadoObjeto;
 
 typedef enum {
@@ -34,6 +36,7 @@ typedef struct {
 } Inventario;
 
 bool inventarioPossui(const Inventario *inventario, int id);
+
 ResultadoInventario inventarioAdicionarObjeto(
     Inventario *inventario,
     int id,
@@ -41,6 +44,7 @@ ResultadoInventario inventarioAdicionarObjeto(
     const char *descricao,
     bool consumivel
 );
+
 ResultadoInventario inventarioAdicionarFita(
     Inventario *inventario,
     int id,
@@ -48,12 +52,24 @@ ResultadoInventario inventarioAdicionarFita(
     int frequencia,
     int digito
 );
-const ObjetoInventario *inventarioBuscarObjeto(const Inventario *inventario, int id);
-const Fita *inventarioBuscarFita(const Inventario *inventario, int id);
+
+const ObjetoInventario *inventarioBuscarObjeto(
+    const Inventario *inventario,
+    int id
+);
+
+const Fita *inventarioBuscarFita(
+    const Inventario *inventario,
+    int id
+);
+
 int inventarioContarObjetos(const Inventario *inventario);
 int inventarioContarFitas(const Inventario *inventario);
+
 bool inventarioConsumirObjeto(Inventario *inventario, int id);
+bool inventarioMarcarInstalado(Inventario *inventario, int id);
 bool inventarioRemoverObjeto(Inventario *inventario, int id);
+
 void inventarioLimpar(Inventario *inventario);
 
 #endif

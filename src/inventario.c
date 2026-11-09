@@ -1,8 +1,12 @@
+
 #include "inventario.h"
 #include <stdio.h>
 #include <string.h>
 
-const ObjetoInventario *inventarioBuscarObjeto(const Inventario *inventario, int id) {
+const ObjetoInventario *inventarioBuscarObjeto(
+    const Inventario *inventario,
+    int id
+) {
     if (!inventario || id <= 0)
         return NULL;
 
@@ -16,7 +20,10 @@ const ObjetoInventario *inventarioBuscarObjeto(const Inventario *inventario, int
     return NULL;
 }
 
-const Fita *inventarioBuscarFita(const Inventario *inventario, int id) {
+const Fita *inventarioBuscarFita(
+    const Inventario *inventario,
+    int id
+) {
     if (!inventario || id <= 0)
         return NULL;
 
@@ -25,8 +32,10 @@ const Fita *inventarioBuscarFita(const Inventario *inventario, int id) {
 
 bool inventarioPossui(const Inventario *inventario, int id) {
     return inventario &&
-           (inventarioBuscarObjeto(inventario, id) != NULL ||
-            inventarioBuscarFita(inventario, id) != NULL);
+           (
+               inventarioBuscarObjeto(inventario, id) != NULL ||
+               inventarioBuscarFita(inventario, id) != NULL
+           );
 }
 
 ResultadoInventario inventarioAdicionarObjeto(
@@ -36,9 +45,15 @@ ResultadoInventario inventarioAdicionarObjeto(
     const char *descricao,
     bool consumivel
 ) {
-    if (!inventario || id <= 0 || !nome || !*nome || !descricao ||
+    if (
+        !inventario ||
+        id <= 0 ||
+        !nome ||
+        !*nome ||
+        !descricao ||
         strlen(nome) >= sizeof inventario->objetos[0].nome ||
-        strlen(descricao) >= sizeof inventario->objetos[0].descricao) {
+        strlen(descricao) >= sizeof inventario->objetos[0].descricao
+    ) {
         return INVENTARIO_INVALIDO;
     }
 
@@ -94,8 +109,9 @@ int inventarioContarObjetos(const Inventario *inventario) {
 
     int total = 0;
 
-    for (int i = 0; i < INVENTARIO_MAX_OBJETOS; i++)
+    for (int i = 0; i < INVENTARIO_MAX_OBJETOS; i++) {
         total += inventario->objetos[i].estado == OBJETO_GUARDADO;
+    }
 
     return total;
 }
@@ -111,10 +127,31 @@ bool inventarioConsumirObjeto(Inventario *inventario, int id) {
     for (int i = 0; i < INVENTARIO_MAX_OBJETOS; i++) {
         ObjetoInventario *objeto = &inventario->objetos[i];
 
-        if (objeto->id == id &&
+        if (
+            objeto->id == id &&
             objeto->estado == OBJETO_GUARDADO &&
-            objeto->consumivel) {
+            objeto->consumivel
+        ) {
             objeto->estado = OBJETO_USADO;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool inventarioMarcarInstalado(Inventario *inventario, int id) {
+    if (!inventario || id <= 0)
+        return false;
+
+    for (int i = 0; i < INVENTARIO_MAX_OBJETOS; i++) {
+        ObjetoInventario *objeto = &inventario->objetos[i];
+
+        if (
+            objeto->id == id &&
+            objeto->estado == OBJETO_GUARDADO
+        ) {
+            objeto->estado = OBJETO_INSTALADO;
             return true;
         }
     }
