@@ -19,6 +19,13 @@ enum IdentificadorObjeto {
     ID_FITA_89 = 89
 };
 
+bool bilheteGerenteProximo(int sala, Vector2 personagem);
+bool quadroEletricoProximo(int sala, Vector2 personagem);
+bool aparelhoVhsProximo(int sala, Vector2 personagem);
+bool tecladoSaidaProximo(int sala, Vector2 personagem);
+bool portaSaidaProxima(int sala, Vector2 personagem);
+
+
 bool carregarObjetosMapa(void);
 void reiniciarObjetosMapa(void);
 void liberarObjetosMapa(void);

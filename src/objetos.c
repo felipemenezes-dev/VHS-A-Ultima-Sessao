@@ -1,4 +1,3 @@
-
 #include "objetos.h"
 #include <math.h>
 #include <string.h>
@@ -37,7 +36,7 @@ static ObjetoMapa objetos[] = {
         "assets/objetos/kit_medico.png",
         {470, 640},
         TAMANHO_OBJETO,
-        true, true, false, {0}
+        true, true, false, (Texture2D){0}
     },
     {
         ID_FITA_17,
@@ -47,7 +46,7 @@ static ObjetoMapa objetos[] = {
         "assets/objetos/fita_17.png",
         {1318, 433},
         TAMANHO_OBJETO,
-        true, true, false, {0}
+        true, true, false, (Texture2D){0}
     },
     {
         ID_CHAVE_ESTOQUE,
@@ -57,7 +56,7 @@ static ObjetoMapa objetos[] = {
         "assets/objetos/chave_estoque.png",
         {1008, 445},
         TAMANHO_OBJETO,
-        true, true, false, {0}
+        true, true, false, (Texture2D){0}
     },
     {
         ID_FITA_42,
@@ -67,7 +66,7 @@ static ObjetoMapa objetos[] = {
         "assets/objetos/fita_42.png",
         {1306, 586},
         TAMANHO_OBJETO,
-        true, true, false, {0}
+        true, true, false, (Texture2D){0}
     },
     {
         ID_FUSIVEL,
@@ -77,7 +76,7 @@ static ObjetoMapa objetos[] = {
         "assets/objetos/fusivel.png",
         {1333, 743},
         TAMANHO_OBJETO,
-        true, true, false, {0}
+        true, true, false, (Texture2D){0}
     },
     {
         ID_QUADRO_ELETRICO,
@@ -87,7 +86,7 @@ static ObjetoMapa objetos[] = {
         NULL,
         {248, 301},
         TAMANHO_OBJETO,
-        false, true, false, {0}
+        false, true, false, (Texture2D){0}
     },
     {
         ID_FITA_89,
@@ -97,7 +96,7 @@ static ObjetoMapa objetos[] = {
         "assets/objetos/fita_89.png",
         {1172, 326},
         TAMANHO_OBJETO,
-        true, true, false, {0}
+        true, true, false, (Texture2D){0}
     },
     {
         ID_BATERIA_FLASH,
@@ -107,7 +106,7 @@ static ObjetoMapa objetos[] = {
         "assets/objetos/bateria_flash.png",
         {458, 594},
         TAMANHO_OBJETO,
-        true, true, false, {0}
+        true, true, false, (Texture2D){0}
     },
     {
         ID_BILHETE_GERENTE,
@@ -117,7 +116,7 @@ static ObjetoMapa objetos[] = {
         "assets/objetos/bilhete_gerente.png",
         {708, 445},
         TAMANHO_BILHETE,
-        false, true, false, {0}
+        false, true, false, (Texture2D){0}
     },
     {
         ID_APARELHO_VHS,
@@ -127,7 +126,7 @@ static ObjetoMapa objetos[] = {
         NULL,
         {870, 345},
         TAMANHO_OBJETO,
-        false, true, false, {0}
+        false, true, false, (Texture2D){0}
     },
     {
         ID_TECLADO_SAIDA,
@@ -137,7 +136,7 @@ static ObjetoMapa objetos[] = {
         "assets/objetos/teclado_saida.png",
         {TECLADO_SAIDA_X, TECLADO_SAIDA_Y},
         TAMANHO_OBJETO,
-        false, true, false, {0}
+        false, true, false, (Texture2D){0}
     }
 };
 
@@ -150,7 +149,6 @@ static ObjetoMapa *encontrarObjetoPorId(int id) {
         if (objetos[i].id == id)
             return &objetos[i];
     }
-
     return NULL;
 }
 
@@ -171,9 +169,7 @@ static ObjetoMapa *encontrarObjetoProximo(int sala, Vector2 personagem) {
     for (int i = 0; i < quantidadeObjetos(); i++) {
         ObjetoMapa *objeto = &objetos[i];
 
-        if (!objeto->coletavel ||
-            objeto->coletado ||
-            objeto->sala != sala)
+        if (!objeto->coletavel || objeto->coletado || objeto->sala != sala)
             continue;
 
         float distancia = hypotf(
@@ -197,9 +193,7 @@ static ObjetoMapa *encontrarInteracaoProxima(int sala, Vector2 personagem) {
     for (int i = 0; i < quantidadeObjetos(); i++) {
         ObjetoMapa *objeto = &objetos[i];
 
-        if (!objeto->interativo ||
-            objeto->coletado ||
-            objeto->sala != sala)
+        if (!objeto->interativo || objeto->coletado || objeto->sala != sala)
             continue;
 
         float distancia = hypotf(
@@ -207,8 +201,7 @@ static ObjetoMapa *encontrarInteracaoProxima(int sala, Vector2 personagem) {
             personagem.y - objeto->posicao.y
         );
 
-        if (distancia <= alcanceObjeto(objeto) &&
-            distancia < menorDistancia) {
+        if (distancia <= alcanceObjeto(objeto) && distancia < menorDistancia) {
             menorDistancia = distancia;
             maisProximo = objeto;
         }
@@ -217,16 +210,10 @@ static ObjetoMapa *encontrarInteracaoProxima(int sala, Vector2 personagem) {
     return maisProximo;
 }
 
-static bool objetoEstaProximo(
-    int id,
-    int sala,
-    Vector2 personagem
-) {
+static bool objetoEstaProximo(int id, int sala, Vector2 personagem) {
     ObjetoMapa *objeto = encontrarObjetoPorId(id);
 
-    if (!objeto ||
-        objeto->sala != sala ||
-        objeto->coletado)
+    if (!objeto || objeto->sala != sala || objeto->coletado)
         return false;
 
     float distancia = hypotf(
@@ -238,35 +225,19 @@ static bool objetoEstaProximo(
 }
 
 bool bilheteGerenteProximo(int sala, Vector2 personagem) {
-    return objetoEstaProximo(
-        ID_BILHETE_GERENTE,
-        sala,
-        personagem
-    );
+    return objetoEstaProximo(ID_BILHETE_GERENTE, sala, personagem);
 }
 
 bool quadroEletricoProximo(int sala, Vector2 personagem) {
-    return objetoEstaProximo(
-        ID_QUADRO_ELETRICO,
-        sala,
-        personagem
-    );
+    return objetoEstaProximo(ID_QUADRO_ELETRICO, sala, personagem);
 }
 
 bool aparelhoVhsProximo(int sala, Vector2 personagem) {
-    return objetoEstaProximo(
-        ID_APARELHO_VHS,
-        sala,
-        personagem
-    );
+    return objetoEstaProximo(ID_APARELHO_VHS, sala, personagem);
 }
 
 bool tecladoSaidaProximo(int sala, Vector2 personagem) {
-    return objetoEstaProximo(
-        ID_TECLADO_SAIDA,
-        sala,
-        personagem
-    );
+    return objetoEstaProximo(ID_TECLADO_SAIDA, sala, personagem);
 }
 
 bool portaSaidaProxima(int sala, Vector2 personagem) {
@@ -288,9 +259,7 @@ bool carregarObjetosMapa(void) {
         if (!objetos[i].caminho)
             continue;
 
-        objetos[i].textura = LoadTexture(
-            objetos[i].caminho
-        );
+        objetos[i].textura = LoadTexture(objetos[i].caminho);
 
         if (!objetos[i].textura.id) {
             TraceLog(
@@ -298,7 +267,6 @@ bool carregarObjetosMapa(void) {
                 "Nao foi possivel carregar o objeto: %s",
                 objetos[i].caminho
             );
-
             sucesso = false;
         } else {
             SetTextureFilter(
@@ -365,10 +333,7 @@ void desenharObjetosMapa(int sala) {
 }
 
 void desenharIndicacaoColeta(int sala, Vector2 personagem) {
-    ObjetoMapa *objeto = encontrarInteracaoProxima(
-        sala,
-        personagem
-    );
+    ObjetoMapa *objeto = encontrarInteracaoProxima(sala, personagem);
 
     if (!objeto)
         return;
@@ -425,10 +390,7 @@ bool coletarObjetoProximo(
     if (!inventario)
         return false;
 
-    ObjetoMapa *objeto = encontrarObjetoProximo(
-        sala,
-        personagem
-    );
+    ObjetoMapa *objeto = encontrarObjetoProximo(sala, personagem);
 
     if (!objeto)
         return false;
@@ -465,8 +427,7 @@ bool coletarObjetoProximo(
             objeto->id,
             objeto->nome,
             objeto->descricao,
-            objeto->id == ID_KIT_MEDICO ||
-            objeto->id == ID_BATERIA_FLASH
+            objeto->id == ID_KIT_MEDICO || objeto->id == ID_BATERIA_FLASH
         );
     }
 
@@ -476,7 +437,6 @@ bool coletarObjetoProximo(
             "Nao foi possivel guardar o objeto: %s",
             objeto->nome
         );
-
         return false;
     }
 
