@@ -16,6 +16,8 @@
 #include <unistd.h>
 #include "legendas.h"
 
+#define DURACAO_DANO_VISUAL 0.95f
+
 
 static Texture2D carregarImagemPersonagem(const char *caminho) {
     Image imagem = LoadImage(caminho);
@@ -549,6 +551,11 @@ int main(void) {
 
 
     int vida = 100;
+
+    int danoRecebidoVisual = 0;
+    float tempoDanoVisual = 0.0f;
+    Vector2 posicaoDanoVisual = {0};
+
     int salaAtual = SALAO;
     int direcao = BAIXO;
     int quadroAnimacao = 0;
@@ -606,6 +613,11 @@ int main(void) {
                     personagem = salas[SALAO].entrada;
                     salaAtual = SALAO;
                     vida = 100;
+
+                    danoRecebidoVisual = 0;
+                    tempoDanoVisual = 0.0f;
+                    posicaoDanoVisual = (Vector2){0};
+
                     direcao = BAIXO;
                     quadroAnimacao = 0;
                     tempoAnimacao = 0;
@@ -916,8 +928,22 @@ int main(void) {
             }
 
 
+            tempoDanoVisual = fmaxf(0.0f, tempoDanoVisual - tempoQuadro);
+
+            int vidaAntesDoAtaque = vida;
+
             atacarJohn(&inimigo, mascaras, salaAtual, personagem,
                 inventarioContarFitas(&inventario.dados), tempoQuadro, &vida);
+
+            if (vida < vidaAntesDoAtaque) {
+                danoRecebidoVisual = vidaAntesDoAtaque - vida;
+                tempoDanoVisual = DURACAO_DANO_VISUAL;
+                posicaoDanoVisual = (Vector2){
+                    personagem.x + 35.0f,
+                    personagem.y - ALTURA_JOHN * 0.72f
+                };
+            }
+
             if (vida == 0)
                 andando = false;
 
@@ -1017,6 +1043,23 @@ int main(void) {
 
         desenharObjetosMapa(salaAtual);
 
+        if (tempoDanoVisual > 0.0f && danoRecebidoVisual > 0) {
+            float progresso = 1.0f - tempoDanoVisual / DURACAO_DANO_VISUAL;
+            float deslocamento = progresso * 45.0f;
+            float transparencia = tempoDanoVisual < 0.25f
+                ? tempoDanoVisual / 0.25f
+                : 1.0f;
+            unsigned char alpha = (unsigned char)(255.0f * transparencia);
+
+            char textoDano[32];
+            snprintf(textoDano, sizeof textoDano, "-%d VIDA", danoRecebidoVisual);
+
+            int x = (int)posicaoDanoVisual.x;
+            int y = (int)(posicaoDanoVisual.y - deslocamento);
+
+            DrawText(textoDano, x + 2, y + 2, 30, (Color){10, 0, 0, alpha});
+            DrawText(textoDano, x, y, 30, (Color){255, 65, 65, alpha});
+        }
 
         if (escurecimento > 0) {
             DrawRectangle(

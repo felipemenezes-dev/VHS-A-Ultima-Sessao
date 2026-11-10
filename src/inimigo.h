@@ -6,10 +6,14 @@
 #define COLUNAS_INIMIGO (LARGURA_MUNDO / PASSO_INIMIGO)
 #define LINHAS_INIMIGO (ALTURA_MUNDO / PASSO_INIMIGO)
 #define CELULAS_INIMIGO (COLUNAS_INIMIGO * LINHAS_INIMIGO)
+#define QUADROS_ATAQUE 4
 
 typedef struct {
     bool ativo;
     bool caminhando;
+    bool atacando;
+    bool danoAplicado;
+    bool ataqueAcertou;
     Sound somPasso;
     float distanciaPasso;
     bool contatoAnterior, atingidoFlash;
@@ -20,7 +24,10 @@ typedef struct {
     int caminho[CELULAS_INIMIGO];
     int quantidade, proximo, salaAlvo, celulaAlvo, porta;
     float espera, tempoAnimacao, tempoParado, esperaTroca, esperaAtaque;
+    int direcaoAtaque, quadroAtaque;
+    float tempoAtaque;
     Texture2D imagens[NUM_DIRECOES][NUM_QUADROS];
+    Texture2D imagensAtaque[NUM_DIRECOES][QUADROS_ATAQUE];
 } Inimigo;
 
 bool iniciarInimigo(Inimigo *inimigo, const MapaColisao mapas[]);

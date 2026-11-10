@@ -668,9 +668,15 @@ void desenharPersonagensComCamadas(Texture2D john, Vector2 posicaoJohn,
         }
         if (personagem < 2) {
             Texture2D imagem = imagens[personagem];
-            float largura = ALTURA_JOHN * imagem.width / imagem.height;
-            Rectangle destino = {posicoes[personagem].x - largura / 2,
-                posicoes[personagem].y - ALTURA_JOHN, largura, ALTURA_JOHN};
+            bool ehRebobinador = inimigo.id != 0 && imagem.id == inimigo.id;
+            float altura = ALTURA_JOHN;
+
+            if (ehRebobinador)
+                altura *= 1.30f;
+
+            float largura = altura * imagem.width / imagem.height;
+            Rectangle destino = {posicoes[personagem].x - largura / 2.0f,
+                posicoes[personagem].y - altura, largura, altura};
             DrawTexturePro(imagem, (Rectangle){0, 0, imagem.width, imagem.height},
                 destino, (Vector2){0, 0}, 0, WHITE);
         }
