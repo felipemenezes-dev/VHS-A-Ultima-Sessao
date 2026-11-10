@@ -374,6 +374,7 @@ void atualizarSomInimigo(Inimigo *inimigo, int salaJohn, Vector2 john, bool paus
     }
 
     float volume = fmaxf(0, 1.0f - distancia(inimigo->posicao, john) / 600.0f);
+    volume = fminf(1.0f, volume * 1.8f);
     SetSoundVolume(inimigo->somPasso, volume);
     if (inimigo->distanciaPasso >= 60.0f) {
         inimigo->distanciaPasso = fmodf(inimigo->distanciaPasso, 60.0f);

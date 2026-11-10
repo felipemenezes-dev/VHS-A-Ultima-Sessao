@@ -216,15 +216,18 @@ static bool carregarCamadasSalaoBanheiro(const Image *imagensOriginais) {
                      (Vector2){964, 103}, (Vector2){1068, 103}, (Vector2){1078, 111},
                      (Vector2){1082, 211}, (Vector2){954, 216});
     ADICIONAR_CAMADA(
-        SALAO, "Televisores superiores", 337, (Vector2){1327, 245}, (Vector2){1337, 190},
+        SALAO, "Televisores superiores", 318, (Vector2){1327, 245}, (Vector2){1337, 190},
         (Vector2){1362, 180}, (Vector2){1367, 124}, (Vector2){1394, 114}, (Vector2){1437, 134},
         (Vector2){1439, 188}, (Vector2){1420, 194}, (Vector2){1428, 217}, (Vector2){1420, 256},
+        (Vector2){1404, 310}, (Vector2){1394, 318}, (Vector2){1326, 288});
+    ADICIONAR_CAMADA(
+        SALAO, "Televisor pequeno superior", 338, (Vector2){1420, 256},
         (Vector2){1434, 246}, (Vector2){1464, 263}, (Vector2){1460, 302}, (Vector2){1450, 302},
         (Vector2){1458, 326}, (Vector2){1437, 338}, (Vector2){1407, 329}, (Vector2){1404, 310},
-        (Vector2){1394, 318}, (Vector2){1326, 288});
+        (Vector2){1410, 279});
 
 
-    ADICIONAR_CAMADA(SALAO, "Estante lateral esquerda superior", 0, (Vector2){92, 289},
+    ADICIONAR_CAMADA(SALAO, "Estante lateral esquerda superior", 396, (Vector2){92, 289},
                      (Vector2){142, 167}, (Vector2){169, 166}, (Vector2){191, 179},
                      (Vector2){201, 282}, (Vector2){170, 371}, (Vector2){155, 396},
                      (Vector2){111, 384}, (Vector2){104, 339});
@@ -413,11 +416,16 @@ static bool carregarCamadasEstoqueProjecao(const Image *imagensOriginais) {
                      (Vector2){1408, 543}, (Vector2){1399, 421}, (Vector2){1393, 327},
                      (Vector2){1391, 261}, (Vector2){1408, 254});
     ADICIONAR_CAMADA(
-        ESTOQUE, "caixas e lixeira direita", 0, (Vector2){1331, 278}, (Vector2){1365, 279},
+        ESTOQUE, "caixas direita", 442, (Vector2){1331, 278}, (Vector2){1365, 279},
         (Vector2){1376, 289}, (Vector2){1377, 340}, (Vector2){1387, 350}, (Vector2){1393, 389},
-        (Vector2){1380, 407}, (Vector2){1387, 419}, (Vector2){1384, 454}, (Vector2){1377, 467},
-        (Vector2){1358, 469}, (Vector2){1340, 461}, (Vector2){1336, 443}, (Vector2){1320, 442},
+        (Vector2){1380, 407}, (Vector2){1364, 403}, (Vector2){1343, 409},
+        (Vector2){1337, 421}, (Vector2){1336, 443}, (Vector2){1320, 442},
         (Vector2){1313, 414}, (Vector2){1314, 349}, (Vector2){1329, 344});
+    ADICIONAR_CAMADA(
+        ESTOQUE, "lixeira direita", 469, (Vector2){1364, 403}, (Vector2){1380, 407},
+        (Vector2){1387, 419}, (Vector2){1384, 454}, (Vector2){1377, 467},
+        (Vector2){1358, 469}, (Vector2){1340, 461}, (Vector2){1336, 443},
+        (Vector2){1337, 421}, (Vector2){1343, 409});
     ADICIONAR_CAMADA(ESTOQUE, "armario e caixas canto direito", 0, (Vector2){1432, 522},
                      (Vector2){1456, 523}, (Vector2){1459, 502}, (Vector2){1508, 502},
                      (Vector2){1515, 529}, (Vector2){1516, 571}, (Vector2){1505, 579},

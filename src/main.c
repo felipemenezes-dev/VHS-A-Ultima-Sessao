@@ -297,6 +297,15 @@ int main(void) {
 
 
     InitAudioDevice();
+    Music musicaJogo = {0};
+    bool musicaJogoIniciada = false;
+    if (IsAudioDeviceReady()) {
+        musicaJogo = LoadMusicStream("assets/sons/musica_jogo.mp3");
+        if (IsMusicValid(musicaJogo)) {
+            musicaJogo.looping = true;
+            SetMusicVolume(musicaJogo, 0.35f);
+        }
+    }
 
 
     SetExitKey(KEY_NULL);
@@ -563,6 +572,23 @@ int main(void) {
 
 
     while (!erro && !WindowShouldClose()) {
+        if (IsMusicValid(musicaJogo)) {
+            bool musicaPausada = noMenu || inventario.aberto ||
+                interfaceVHSEstaAberta(&interfaceVHS) ||
+                tecladoSaidaEstaAberto(&tecladoSaida) || vida == 0 || jogoConcluido;
+            if (musicaPausada) {
+                if (IsMusicStreamPlaying(musicaJogo))
+                    PauseMusicStream(musicaJogo);
+            } else {
+                if (!musicaJogoIniciada) {
+                    PlayMusicStream(musicaJogo);
+                    musicaJogoIniciada = true;
+                } else if (!IsMusicStreamPlaying(musicaJogo)) {
+                    ResumeMusicStream(musicaJogo);
+                }
+                UpdateMusicStream(musicaJogo);
+            }
+        }
         if (noMenu) {
             atualizarSomInimigo(&inimigo, salaAtual, personagem, true);
             EstadoSubMenu opcao = atualizarMenu();
@@ -1159,6 +1185,8 @@ int main(void) {
 
 
     descarregarMenu();
+    if (IsMusicValid(musicaJogo))
+        UnloadMusicStream(musicaJogo);
     descarregarDerrota();
     liberarInimigo(&inimigo);
 
@@ -1184,6 +1212,5 @@ int main(void) {
 
     return erro ? 1 : 0;
 }
-
 
 

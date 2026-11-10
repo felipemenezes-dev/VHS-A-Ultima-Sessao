@@ -10,6 +10,7 @@ typedef enum {
 } OpcoesMenu;
 
 static Texture2D texturaFundo;
+static Music musicaMenu;
 static int opcaoSelecionada = OPCAO_INICIAR;
 static EstadoSubMenu estadoAtual = ESTADO_MENU_PRINCIPAL;
 
@@ -20,6 +21,11 @@ static float alphaFade = 0.0f;
 static bool iniciandoFade = false;
 
 bool carregarMenu(void) {
+    if (IsAudioDeviceReady() && musicaMenu.stream.buffer == NULL) {
+        musicaMenu = LoadMusicStream("assets/sons/musica_menu.mp3");
+        if (musicaMenu.stream.buffer != NULL)
+            musicaMenu.looping = true;
+    }
     if (texturaFundo.id != 0) {
         UnloadTexture(texturaFundo);
         texturaFundo = (Texture2D){0};
@@ -67,6 +73,10 @@ bool carregarMenu(void) {
 }
 
 void descarregarMenu(void) {
+    if (musicaMenu.stream.buffer != NULL) {
+        UnloadMusicStream(musicaMenu);
+        musicaMenu = (Music){0};
+    }
     if (texturaFundo.id != 0) {
         UnloadTexture(texturaFundo);
         texturaFundo = (Texture2D){0};
@@ -74,6 +84,11 @@ void descarregarMenu(void) {
 }
 
 EstadoSubMenu atualizarMenu(void) {
+    if (musicaMenu.stream.buffer != NULL) {
+        if (!IsMusicStreamPlaying(musicaMenu))
+            PlayMusicStream(musicaMenu);
+        UpdateMusicStream(musicaMenu);
+    }
     float dt = GetFrameTime();
     tempoEfeito += dt;
 
@@ -83,6 +98,8 @@ EstadoSubMenu atualizarMenu(void) {
         alphaFade += dt * 1.5f;
         if (alphaFade >= 1.0f) {
             alphaFade = 1.0f;
+            if (musicaMenu.stream.buffer != NULL)
+                StopMusicStream(musicaMenu);
             return ESTADO_MENU_INICIAR_JOGO;
         }
         return ESTADO_MENU_PRINCIPAL;
@@ -114,6 +131,8 @@ EstadoSubMenu atualizarMenu(void) {
                 estadoAtual = ESTADO_MENU_CREDITOS;
                 break;
             case OPCAO_SAIR:
+                if (musicaMenu.stream.buffer != NULL)
+                    StopMusicStream(musicaMenu);
                 return ESTADO_MENU_SAIR;
         }
     }
