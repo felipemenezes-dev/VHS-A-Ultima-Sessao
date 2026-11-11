@@ -29,8 +29,6 @@ bool tecladoSaidaProximo(int sala, Vector2 personagem);
 bool portaSaidaProxima(int sala, Vector2 personagem);
 
 
-
-
 bool carregarObjetosMapa(void);
 void reiniciarObjetosMapa(void);
 void marcarObjetoConcluido(int id);
