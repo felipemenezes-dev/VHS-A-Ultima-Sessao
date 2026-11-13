@@ -15,6 +15,7 @@ typedef struct {
     bool danoAplicado;
     bool ataqueAcertou;
     Sound somPasso;
+    Sound somAtaque;
     float distanciaPasso;
     bool contatoAnterior, atingidoFlash;
     int acertos;

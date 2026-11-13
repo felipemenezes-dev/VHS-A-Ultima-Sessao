@@ -239,11 +239,15 @@ bool iniciarInimigo(Inimigo *inimigo, const MapaColisao mapas[]) {
 
     if (IsAudioDeviceReady()) {
         inimigo->somPasso = LoadSound("assets/sons/passo_inimigo.wav");
+        inimigo->somAtaque = LoadSound("assets/sons/ataque_inimigo.wav");
 
-        if (!IsSoundValid(inimigo->somPasso)) {
+        if (!IsSoundValid(inimigo->somPasso) ||
+            !IsSoundValid(inimigo->somAtaque)) {
             liberarInimigo(inimigo);
             return false;
         }
+
+        SetSoundVolume(inimigo->somAtaque, 0.75f);
     }
 
     const char *direcoes[] = {
@@ -654,6 +658,9 @@ static int direcaoParaJohn(Vector2 origem, Vector2 john) {
 }
 
 static void aplicarDano(Inimigo *inimigo, int *vida) {
+    if (IsSoundValid(inimigo->somAtaque))
+        PlaySound(inimigo->somAtaque);
+
     *vida -= 20;
 
     if (*vida < 0)
@@ -862,6 +869,9 @@ void liberarInimigo(Inimigo *inimigo) {
 
     if (IsSoundValid(inimigo->somPasso))
         UnloadSound(inimigo->somPasso);
+
+    if (IsSoundValid(inimigo->somAtaque))
+        UnloadSound(inimigo->somAtaque);
 
     for (int direcao = 0; direcao < NUM_DIRECOES; direcao++) {
         for (int quadro = 0; quadro < NUM_QUADROS; quadro++) {
