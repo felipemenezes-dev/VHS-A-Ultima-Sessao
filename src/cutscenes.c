@@ -1,5 +1,6 @@
 
 #include "cutscenes.h"
+#include "legendas.h"
 #include "mundo.h"
 #include <math.h>
 #include <stdio.h>
@@ -221,6 +222,12 @@ static const Etapa *obterEtapas(TipoCutscene tipo, int *quantidade) {
     }
 }
 
+static void tocarSonsDigitacao(
+    const Etapa *etapa,
+    float tempoAnterior,
+    float tempoAtual
+);
+
 static void descarregarTexturaAtual(SistemaCutscenes *sistema) {
     if (!sistema)
         return;
@@ -352,7 +359,13 @@ void atualizarCutscene(SistemaCutscenes *sistema, float delta) {
     }
 
     delta = fminf(delta, 0.25f);
+    float tempoAnterior = sistema->tempoEtapa;
     sistema->tempoEtapa += delta;
+    tocarSonsDigitacao(
+        &etapas[sistema->indiceEtapa],
+        tempoAnterior,
+        sistema->tempoEtapa
+    );
 
     while (sistema->ativa &&
            sistema->tempoEtapa >= etapas[sistema->indiceEtapa].duracao) {
@@ -391,6 +404,86 @@ static float limitar(float valor, float minimo, float maximo) {
     return valor;
 }
 
+static int quantidadeCaracteres(const char *texto, size_t bytes) {
+    int quantidade = 0;
+
+    if (!texto)
+        return 0;
+
+    for (size_t indice = 0; indice < bytes && texto[indice] != '\0';) {
+        unsigned char caractere = (unsigned char)texto[indice];
+        size_t tamanho = 1;
+
+        if ((caractere & 0xE0) == 0xC0)
+            tamanho = 2;
+        else if ((caractere & 0xF0) == 0xE0)
+            tamanho = 3;
+        else if ((caractere & 0xF8) == 0xF0)
+            tamanho = 4;
+
+        indice += tamanho;
+        quantidade++;
+    }
+
+    return quantidade;
+}
+
+static int caracteresDigitados(const char *texto, float tempo) {
+    if (!texto)
+        return 0;
+
+    size_t bytes = (size_t)fminf(
+        (float)strlen(texto),
+        floorf(fmaxf(0.0f, tempo) / 0.035f)
+    );
+
+    return quantidadeCaracteres(texto, bytes);
+}
+
+static void tocarSonsDigitacao(const Etapa *etapa, float tempoAnterior, float tempoAtual) {
+    int antes = caracteresDigitados(etapa->titulo, tempoAnterior) +
+        caracteresDigitados(etapa->texto, tempoAnterior) +
+        caracteresDigitados(etapa->legenda, tempoAnterior);
+    int depois = caracteresDigitados(etapa->titulo, tempoAtual) +
+        caracteresDigitados(etapa->texto, tempoAtual) +
+        caracteresDigitados(etapa->legenda, tempoAtual);
+
+    for (int indice = antes; indice < depois; indice++)
+        tocarSomDigitacao();
+}
+
+static void textoDigitado(
+    const char *texto,
+    float tempo,
+    char *destino,
+    size_t tamanhoDestino
+) {
+    if (!destino || tamanhoDestino == 0)
+        return;
+
+    destino[0] = '\0';
+
+    if (!texto)
+        return;
+
+    size_t total = strlen(texto);
+    size_t bytes = (size_t)fminf(
+        (float)total,
+        floorf(fmaxf(0.0f, tempo) / 0.035f)
+    );
+
+    if (bytes >= tamanhoDestino)
+        bytes = tamanhoDestino - 1;
+
+    while (bytes > 0 &&
+           ((unsigned char)texto[bytes] & 0xC0) == 0x80) {
+        bytes--;
+    }
+
+    memcpy(destino, texto, bytes);
+    destino[bytes] = '\0';
+}
+
 static void desenharTextoCentralizado(
     const char *texto,
     int y,
@@ -425,31 +518,37 @@ static void desenharTextoCentralizado(
     }
 }
 
-static void desenharCartela(const Etapa *etapa) {
+static void desenharCartela(const Etapa *etapa, float tempo) {
+    char titulo[512];
+    char texto[512];
+
+    textoDigitado(etapa->titulo, tempo, titulo, sizeof titulo);
+    textoDigitado(etapa->texto, tempo, texto, sizeof texto);
+
     DrawRectangle(0, 0, LARGURA_MUNDO, ALTURA_MUNDO, BLACK);
     DrawRectangle(0, 0, LARGURA_MUNDO, 7, (Color){110, 12, 24, 255});
     DrawRectangle(0, ALTURA_MUNDO - 7, LARGURA_MUNDO, 7, (Color){110, 12, 24, 255});
 
-    if (etapa->titulo) {
+    if (titulo[0]) {
         desenharTextoCentralizado(
-            etapa->titulo,
+            titulo,
             ALTURA_MUNDO / 2 - 75,
             42,
             (Color){230, 45, 55, 255}
         );
     }
 
-    if (etapa->texto) {
+    if (texto[0]) {
         int quantidadeLinhas = 1;
 
-        for (const char *p = etapa->texto; *p; p++)
+        for (const char *p = texto; *p; p++)
             if (*p == '\n')
                 quantidadeLinhas++;
 
         int altura = quantidadeLinhas * 42;
 
         desenharTextoCentralizado(
-            etapa->texto,
+            texto,
             (ALTURA_MUNDO - altura) / 2,
             28,
             RAYWHITE
@@ -457,9 +556,12 @@ static void desenharCartela(const Etapa *etapa) {
     }
 }
 
-static void desenharLegendaCutscene(const char *texto) {
+static void desenharLegendaCutscene(const char *texto, float tempo) {
     if (!texto || !texto[0])
         return;
+
+    char textoVisivel[512];
+    textoDigitado(texto, tempo, textoVisivel, sizeof textoVisivel);
 
     int altura = 112;
     int y = ALTURA_MUNDO - altura - 32;
@@ -470,14 +572,14 @@ static void desenharLegendaCutscene(const char *texto) {
     int tamanho = 25;
     int quantidadeLinhas = 1;
 
-    for (const char *p = texto; *p; p++)
+    for (const char *p = textoVisivel; *p; p++)
         if (*p == '\n')
             quantidadeLinhas++;
 
     int alturaTexto = quantidadeLinhas * (tamanho + 12);
 
     desenharTextoCentralizado(
-        texto,
+        textoVisivel,
         y + (altura - alturaTexto) / 2,
         tamanho,
         RAYWHITE
@@ -529,6 +631,11 @@ void desenharCutscene(const SistemaCutscenes *sistema) {
         DrawRectangle(0, 0, LARGURA_MUNDO, ALTURA_MUNDO, BLACK);
 
     const Etapa *etapa = &etapas[sistema->indiceEtapa];
+    char titulo[512];
+    char texto[512];
+
+    textoDigitado(etapa->titulo, sistema->tempoEtapa, titulo, sizeof titulo);
+    textoDigitado(etapa->texto, sistema->tempoEtapa, texto, sizeof texto);
 
     if (etapa->tipo == ETAPA_DESPERTAR_ESCURO) {
         DrawRectangle(
@@ -540,7 +647,7 @@ void desenharCutscene(const SistemaCutscenes *sistema) {
         );
 
         desenharTextoCentralizado(
-            etapa->titulo,
+            titulo,
             ALTURA_MUNDO / 2 - 18,
             30,
             (Color){230, 35, 45, 255}
@@ -572,14 +679,14 @@ void desenharCutscene(const SistemaCutscenes *sistema) {
         );
 
         desenharTextoCentralizado(
-            etapa->titulo,
+            titulo,
             ALTURA_MUNDO - 122,
             24,
             (Color){235, 35, 45, 255}
         );
 
         desenharTextoCentralizado(
-            etapa->texto,
+            texto,
             ALTURA_MUNDO - 78,
             29,
             RAYWHITE
@@ -589,7 +696,7 @@ void desenharCutscene(const SistemaCutscenes *sistema) {
     }
 
     if (etapa->tipo == ETAPA_CARTELA) {
-        desenharCartela(etapa);
+        desenharCartela(etapa, sistema->tempoEtapa);
         return;
     }
 
@@ -648,7 +755,7 @@ void desenharCutscene(const SistemaCutscenes *sistema) {
     );
 
     if (etapa->legenda)
-        desenharLegendaCutscene(etapa->legenda);
+        desenharLegendaCutscene(etapa->legenda, sistema->tempoEtapa);
 }
 
 bool cutsceneEstaAtiva(const SistemaCutscenes *sistema) {

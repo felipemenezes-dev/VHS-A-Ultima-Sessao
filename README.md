@@ -23,3 +23,7 @@ use `make RAYLIB=/caminho/da/raylib`.
 WASD ou setas movimentam John. Tab abre e fecha o inventário.
 Esc fecha o inventário ou encerra o jogo se ele já estiver fechado.
 F1 mostra as colisões e F11 alterna a tela cheia.
+
+O efeito de teclado usa gravações reais de "Keyboard Typing", de Wandering
+Door Games, licenciadas sob CC-BY-SA 4.0:
+https://opengameart.org/content/keyboard-typing
