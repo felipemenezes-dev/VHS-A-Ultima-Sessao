@@ -1,10 +1,9 @@
-
 #include "cutscenes.h"
-#include "legendas.h"
 #include "mundo.h"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+
 
 enum ImagemCutscene {
     IMG_CUT1_1,
@@ -49,6 +48,7 @@ enum ImagemCutscene {
     IMG_CUT7_SINAL_PERDIDO
 };
 
+
 typedef enum {
     ETAPA_IMAGEM,
     ETAPA_CARTELA,
@@ -56,6 +56,7 @@ typedef enum {
     ETAPA_DESPERTAR_INTERFERENCIA,
     ETAPA_DESPERTAR_PRESENCA
 } TipoEtapa;
+
 
 typedef struct {
     int imagem;
@@ -68,14 +69,18 @@ typedef struct {
     const char *legenda;
 } Etapa;
 
+
 #define IMG(id, tempo, zoom1, zoom2, legendaTexto) \
     {id, tempo, zoom1, zoom2, ETAPA_IMAGEM, NULL, NULL, legendaTexto}
+
 
 #define CARTELA(tempo, tituloTexto, corpoTexto) \
     {-1, tempo, 1.0f, 1.0f, ETAPA_CARTELA, tituloTexto, corpoTexto, NULL}
 
+
 #define FX(tempo, tipoEtapa, tituloTexto, corpoTexto) \
     {-1, tempo, 1.0f, 1.0f, tipoEtapa, tituloTexto, corpoTexto, NULL}
+
 
 static const char *const prefixos[CUTSCENE_TOTAL_IMAGENS] = {
     "CUT1.1_",
@@ -120,6 +125,7 @@ static const char *const prefixos[CUTSCENE_TOTAL_IMAGENS] = {
     "CUT7_sinal_perdido"
 };
 
+
 static const Etapa introducao[] = {
     IMG(IMG_CUT1_1, 3.0f, 1.00f, 1.00f, NULL),
     IMG(IMG_CUT1_2, 3.0f, 1.00f, 1.09f, NULL),
@@ -153,6 +159,7 @@ static const Etapa introducao[] = {
     IMG(IMG_CUT4_6, 3.0f, 1.00f, 1.04f, "SAIDA INDISPONIVEL.")
 };
 
+
 static const Etapa missao[] = {
     IMG(IMG_CUT5_1, 2.0f, 1.00f, 1.03f, NULL),
     IMG(IMG_CUT5_2, 2.5f, 1.00f, 1.05f, "[VOZ DISTORCIDA] Tres fragmentos. Tres frequencias."),
@@ -166,11 +173,13 @@ static const Etapa missao[] = {
     IMG(IMG_CUT5_10, 3.0f, 1.00f, 1.00f, NULL)
 };
 
+
 static const Etapa despertar[] = {
     FX(0.5f, ETAPA_DESPERTAR_ESCURO, "SINAL DETECTADO.", NULL),
     FX(0.25f, ETAPA_DESPERTAR_INTERFERENCIA, NULL, NULL),
     FX(2.0f, ETAPA_DESPERTAR_PRESENCA, "[TRANSMISSAO]", "VOCE NAO DEVERIA TER REBOBINADO ISSO.")
 };
+
 
 static const Etapa vitoria[] = {
     IMG(IMG_CUT6_ABRE_SAIDA, 3.0f, 1.00f, 1.04f, NULL),
@@ -185,36 +194,44 @@ static const Etapa vitoria[] = {
     IMG(IMG_CUT6_INTERFERENCIA, 1.5f, 1.00f, 1.00f, NULL)
 };
 
+
 static const Etapa derrota[] = {
     IMG(IMG_CUT7_SINAL_PERDIDO, 1.0f, 1.00f, 1.00f, NULL),
     CARTELA(0.9f, "SINAL PERDIDO", NULL),
     CARTELA(1.8f, "JOHN FOI ABSORVIDO PELA FITA.", "A sessao terminou antes que a transmissao pudesse ser interrompida.")
 };
 
+
 static const Etapa *obterEtapas(TipoCutscene tipo, int *quantidade) {
     if (!quantidade)
         return NULL;
+
 
     switch (tipo) {
         case CUTSCENE_INTRODUCAO:
             *quantidade = (int)(sizeof introducao / sizeof introducao[0]);
             return introducao;
 
+
         case CUTSCENE_MISSAO:
             *quantidade = (int)(sizeof missao / sizeof missao[0]);
             return missao;
+
 
         case CUTSCENE_DESPERTAR:
             *quantidade = (int)(sizeof despertar / sizeof despertar[0]);
             return despertar;
 
+
         case CUTSCENE_VITORIA:
             *quantidade = (int)(sizeof vitoria / sizeof vitoria[0]);
             return vitoria;
 
+
         case CUTSCENE_DERROTA:
             *quantidade = (int)(sizeof derrota / sizeof derrota[0]);
             return derrota;
+
 
         default:
             *quantidade = 0;
@@ -222,55 +239,63 @@ static const Etapa *obterEtapas(TipoCutscene tipo, int *quantidade) {
     }
 }
 
-static void tocarSonsDigitacao(
-    const Etapa *etapa,
-    float tempoAnterior,
-    float tempoAtual
-);
 
 static void descarregarTexturaAtual(SistemaCutscenes *sistema) {
     if (!sistema)
         return;
 
+
     if (sistema->texturaAtual.id)
         UnloadTexture(sistema->texturaAtual);
+
 
     sistema->texturaAtual = (Texture2D){0};
     sistema->imagemAtual = -1;
 }
 
+
 static bool carregarTexturaEtapa(SistemaCutscenes *sistema, int imagem) {
     if (!sistema || imagem < 0 || imagem >= CUTSCENE_TOTAL_IMAGENS)
         return false;
 
+
     if (sistema->imagemAtual == imagem && sistema->texturaAtual.id)
         return true;
 
+
     descarregarTexturaAtual(sistema);
+
 
     if (sistema->caminhos[imagem][0] == '\0')
         return false;
 
+
     sistema->texturaAtual = LoadTexture(sistema->caminhos[imagem]);
+
 
     if (!sistema->texturaAtual.id) {
         TraceLog(LOG_ERROR, "Nao foi possivel carregar a cutscene: %s", sistema->caminhos[imagem]);
         return false;
     }
 
+
     SetTextureFilter(sistema->texturaAtual, TEXTURE_FILTER_POINT);
     sistema->imagemAtual = imagem;
     return true;
 }
 
+
 bool carregarCutscenes(SistemaCutscenes *sistema) {
     if (!sistema)
         return false;
 
+
     memset(sistema, 0, sizeof *sistema);
     sistema->imagemAtual = -1;
 
+
     FilePathList arquivos = LoadDirectoryFiles("assets/cutscenes");
+
 
     if (arquivos.count == 0) {
         TraceLog(LOG_ERROR, "A pasta assets/cutscenes esta vazia ou nao foi encontrada.");
@@ -278,16 +303,20 @@ bool carregarCutscenes(SistemaCutscenes *sistema) {
         return false;
     }
 
+
     bool sucesso = true;
+
 
     for (int imagem = 0; imagem < CUTSCENE_TOTAL_IMAGENS; imagem++) {
         bool encontrada = false;
         size_t tamanhoPrefixo = strlen(prefixos[imagem]);
 
+
         for (unsigned int indice = 0; indice < arquivos.count; indice++) {
             const char *caminho = arquivos.paths[indice];
             const char *nome = strrchr(caminho, '/');
             nome = nome ? nome + 1 : caminho;
+
 
             if (strncmp(nome, prefixos[imagem], tamanhoPrefixo) == 0) {
                 snprintf(
@@ -297,10 +326,12 @@ bool carregarCutscenes(SistemaCutscenes *sistema) {
                     caminho
                 );
 
+
                 encontrada = true;
                 break;
             }
         }
+
 
         if (!encontrada) {
             TraceLog(LOG_ERROR, "Imagem de cutscene nao encontrada. Prefixo esperado: %s",
@@ -309,31 +340,40 @@ bool carregarCutscenes(SistemaCutscenes *sistema) {
         }
     }
 
+
     UnloadDirectoryFiles(arquivos);
+
 
     if (!sucesso)
         memset(sistema->caminhos, 0, sizeof sistema->caminhos);
 
+
     return sucesso;
 }
+
 
 bool iniciarCutscene(SistemaCutscenes *sistema, TipoCutscene tipo) {
     if (!sistema)
         return false;
 
+
     int quantidade = 0;
     const Etapa *etapas = obterEtapas(tipo, &quantidade);
+
 
     if (!etapas || quantidade <= 0)
         return false;
 
+
     descarregarTexturaAtual(sistema);
+
 
     sistema->tipo = tipo;
     sistema->indiceEtapa = 0;
     sistema->tempoEtapa = 0.0f;
     sistema->ativa = true;
     sistema->concluida = CUTSCENE_NENHUMA;
+
 
     if (etapas[0].tipo == ETAPA_IMAGEM &&
         !carregarTexturaEtapa(sistema, etapas[0].imagem)) {
@@ -342,15 +382,19 @@ bool iniciarCutscene(SistemaCutscenes *sistema, TipoCutscene tipo) {
         return false;
     }
 
+
     return true;
 }
+
 
 void atualizarCutscene(SistemaCutscenes *sistema, float delta) {
     if (!sistema || !sistema->ativa || delta <= 0.0f)
         return;
 
+
     int quantidade = 0;
     const Etapa *etapas = obterEtapas(sistema->tipo, &quantidade);
+
 
     if (!etapas || quantidade <= 0) {
         sistema->ativa = false;
@@ -358,19 +402,16 @@ void atualizarCutscene(SistemaCutscenes *sistema, float delta) {
         return;
     }
 
+
     delta = fminf(delta, 0.25f);
-    float tempoAnterior = sistema->tempoEtapa;
     sistema->tempoEtapa += delta;
-    tocarSonsDigitacao(
-        &etapas[sistema->indiceEtapa],
-        tempoAnterior,
-        sistema->tempoEtapa
-    );
+
 
     while (sistema->ativa &&
            sistema->tempoEtapa >= etapas[sistema->indiceEtapa].duracao) {
         sistema->tempoEtapa -= etapas[sistema->indiceEtapa].duracao;
         sistema->indiceEtapa++;
+
 
         if (sistema->indiceEtapa >= quantidade) {
             sistema->ativa = false;
@@ -379,6 +420,7 @@ void atualizarCutscene(SistemaCutscenes *sistema, float delta) {
             descarregarTexturaAtual(sistema);
             return;
         }
+
 
         if (etapas[sistema->indiceEtapa].tipo == ETAPA_IMAGEM &&
             !carregarTexturaEtapa(sistema, etapas[sistema->indiceEtapa].imagem)) {
@@ -389,100 +431,25 @@ void atualizarCutscene(SistemaCutscenes *sistema, float delta) {
             return;
         }
 
+
         if (etapas[sistema->indiceEtapa].tipo != ETAPA_IMAGEM)
             descarregarTexturaAtual(sistema);
     }
 }
 
+
 static float limitar(float valor, float minimo, float maximo) {
     if (valor < minimo)
         return minimo;
 
+
     if (valor > maximo)
         return maximo;
+
 
     return valor;
 }
 
-static int quantidadeCaracteres(const char *texto, size_t bytes) {
-    int quantidade = 0;
-
-    if (!texto)
-        return 0;
-
-    for (size_t indice = 0; indice < bytes && texto[indice] != '\0';) {
-        unsigned char caractere = (unsigned char)texto[indice];
-        size_t tamanho = 1;
-
-        if ((caractere & 0xE0) == 0xC0)
-            tamanho = 2;
-        else if ((caractere & 0xF0) == 0xE0)
-            tamanho = 3;
-        else if ((caractere & 0xF8) == 0xF0)
-            tamanho = 4;
-
-        indice += tamanho;
-        quantidade++;
-    }
-
-    return quantidade;
-}
-
-static int caracteresDigitados(const char *texto, float tempo) {
-    if (!texto)
-        return 0;
-
-    size_t bytes = (size_t)fminf(
-        (float)strlen(texto),
-        floorf(fmaxf(0.0f, tempo) / 0.035f)
-    );
-
-    return quantidadeCaracteres(texto, bytes);
-}
-
-static void tocarSonsDigitacao(const Etapa *etapa, float tempoAnterior, float tempoAtual) {
-    int antes = caracteresDigitados(etapa->titulo, tempoAnterior) +
-        caracteresDigitados(etapa->texto, tempoAnterior) +
-        caracteresDigitados(etapa->legenda, tempoAnterior);
-    int depois = caracteresDigitados(etapa->titulo, tempoAtual) +
-        caracteresDigitados(etapa->texto, tempoAtual) +
-        caracteresDigitados(etapa->legenda, tempoAtual);
-
-    for (int indice = antes; indice < depois; indice++)
-        tocarSomDigitacao();
-}
-
-static void textoDigitado(
-    const char *texto,
-    float tempo,
-    char *destino,
-    size_t tamanhoDestino
-) {
-    if (!destino || tamanhoDestino == 0)
-        return;
-
-    destino[0] = '\0';
-
-    if (!texto)
-        return;
-
-    size_t total = strlen(texto);
-    size_t bytes = (size_t)fminf(
-        (float)total,
-        floorf(fmaxf(0.0f, tempo) / 0.035f)
-    );
-
-    if (bytes >= tamanhoDestino)
-        bytes = tamanhoDestino - 1;
-
-    while (bytes > 0 &&
-           ((unsigned char)texto[bytes] & 0xC0) == 0x80) {
-        bytes--;
-    }
-
-    memcpy(destino, texto, bytes);
-    destino[bytes] = '\0';
-}
 
 static void desenharTextoCentralizado(
     const char *texto,
@@ -493,41 +460,49 @@ static void desenharTextoCentralizado(
     if (!texto)
         return;
 
+
     const char *inicio = texto;
     char linha[512];
+
 
     while (*inicio) {
         const char *fim = strchr(inicio, '\n');
         size_t quantidade = fim ? (size_t)(fim - inicio) : strlen(inicio);
 
+
         if (quantidade >= sizeof linha)
             quantidade = sizeof linha - 1;
+
 
         memcpy(linha, inicio, quantidade);
         linha[quantidade] = '\0';
 
+
         int largura = MeasureText(linha, tamanho);
         DrawText(linha, (LARGURA_MUNDO - largura) / 2, y, tamanho, cor);
 
+
         y += tamanho + 16;
+
 
         if (!fim)
             break;
+
 
         inicio = fim + 1;
     }
 }
 
-static void desenharCartela(const Etapa *etapa, float tempo) {
-    char titulo[512];
-    char texto[512];
 
-    textoDigitado(etapa->titulo, tempo, titulo, sizeof titulo);
-    textoDigitado(etapa->texto, tempo, texto, sizeof texto);
+static void desenharCartela(const Etapa *etapa) {
+    const char *titulo = etapa->titulo ? etapa->titulo : "";
+    const char *texto = etapa->texto ? etapa->texto : "";
+
 
     DrawRectangle(0, 0, LARGURA_MUNDO, ALTURA_MUNDO, BLACK);
     DrawRectangle(0, 0, LARGURA_MUNDO, 7, (Color){110, 12, 24, 255});
     DrawRectangle(0, ALTURA_MUNDO - 7, LARGURA_MUNDO, 7, (Color){110, 12, 24, 255});
+
 
     if (titulo[0]) {
         desenharTextoCentralizado(
@@ -538,14 +513,18 @@ static void desenharCartela(const Etapa *etapa, float tempo) {
         );
     }
 
+
     if (texto[0]) {
         int quantidadeLinhas = 1;
+
 
         for (const char *p = texto; *p; p++)
             if (*p == '\n')
                 quantidadeLinhas++;
 
+
         int altura = quantidadeLinhas * 42;
+
 
         desenharTextoCentralizado(
             texto,
@@ -556,35 +535,40 @@ static void desenharCartela(const Etapa *etapa, float tempo) {
     }
 }
 
-static void desenharLegendaCutscene(const char *texto, float tempo) {
+
+static void desenharLegendaCutscene(const char *texto) {
     if (!texto || !texto[0])
         return;
 
-    char textoVisivel[512];
-    textoDigitado(texto, tempo, textoVisivel, sizeof textoVisivel);
 
     int altura = 112;
     int y = ALTURA_MUNDO - altura - 32;
 
+
     DrawRectangle(0, y, LARGURA_MUNDO, altura, (Color){5, 5, 9, 225});
     DrawRectangle(0, y, LARGURA_MUNDO, 3, (Color){170, 28, 39, 240});
+
 
     int tamanho = 25;
     int quantidadeLinhas = 1;
 
-    for (const char *p = textoVisivel; *p; p++)
+
+    for (const char *p = texto; *p; p++)
         if (*p == '\n')
             quantidadeLinhas++;
 
+
     int alturaTexto = quantidadeLinhas * (tamanho + 12);
 
+
     desenharTextoCentralizado(
-        textoVisivel,
+        texto,
         y + (altura - alturaTexto) / 2,
         tamanho,
         RAYWHITE
     );
 }
+
 
 static void desenharInterferencia(void) {
     DrawRectangle(
@@ -595,18 +579,22 @@ static void desenharInterferencia(void) {
         (Color){38, 0, 10, 235}
     );
 
+
     for (int i = 0; i < 40; i++) {
         int y = GetRandomValue(0, ALTURA_MUNDO - 3);
         int altura = GetRandomValue(1, 5);
         int x = GetRandomValue(0, LARGURA_MUNDO / 3);
         int largura = GetRandomValue(LARGURA_MUNDO / 3, LARGURA_MUNDO);
 
+
         Color cor = (i % 3 == 0)
             ? (Color){255, 20, 35, 75}
             : (Color){220, 220, 240, 35};
 
+
         DrawRectangle(x, y, largura, altura, cor);
     }
+
 
     DrawRectangle(
         0,
@@ -617,25 +605,28 @@ static void desenharInterferencia(void) {
     );
 }
 
+
 void desenharCutscene(const SistemaCutscenes *sistema) {
     if (!sistema || !sistema->ativa)
         return;
 
+
     int quantidade = 0;
     const Etapa *etapas = obterEtapas(sistema->tipo, &quantidade);
+
 
     if (!etapas || sistema->indiceEtapa < 0 || sistema->indiceEtapa >= quantidade)
         return;
 
+
     if (sistema->tipo != CUTSCENE_DESPERTAR)
         DrawRectangle(0, 0, LARGURA_MUNDO, ALTURA_MUNDO, BLACK);
 
-    const Etapa *etapa = &etapas[sistema->indiceEtapa];
-    char titulo[512];
-    char texto[512];
 
-    textoDigitado(etapa->titulo, sistema->tempoEtapa, titulo, sizeof titulo);
-    textoDigitado(etapa->texto, sistema->tempoEtapa, texto, sizeof texto);
+    const Etapa *etapa = &etapas[sistema->indiceEtapa];
+    const char *titulo = etapa->titulo ? etapa->titulo : "";
+    const char *texto = etapa->texto ? etapa->texto : "";
+
 
     if (etapa->tipo == ETAPA_DESPERTAR_ESCURO) {
         DrawRectangle(
@@ -646,6 +637,7 @@ void desenharCutscene(const SistemaCutscenes *sistema) {
             (Color){0, 0, 0, 238}
         );
 
+
         desenharTextoCentralizado(
             titulo,
             ALTURA_MUNDO / 2 - 18,
@@ -653,13 +645,16 @@ void desenharCutscene(const SistemaCutscenes *sistema) {
             (Color){230, 35, 45, 255}
         );
 
+
         return;
     }
+
 
     if (etapa->tipo == ETAPA_DESPERTAR_INTERFERENCIA) {
         desenharInterferencia();
         return;
     }
+
 
     if (etapa->tipo == ETAPA_DESPERTAR_PRESENCA) {
         DrawRectangle(
@@ -670,6 +665,7 @@ void desenharCutscene(const SistemaCutscenes *sistema) {
             (Color){0, 0, 0, 105}
         );
 
+
         DrawRectangle(
             0,
             ALTURA_MUNDO - 142,
@@ -678,12 +674,14 @@ void desenharCutscene(const SistemaCutscenes *sistema) {
             (Color){4, 4, 8, 220}
         );
 
+
         desenharTextoCentralizado(
             titulo,
             ALTURA_MUNDO - 122,
             24,
             (Color){235, 35, 45, 255}
         );
+
 
         desenharTextoCentralizado(
             texto,
@@ -692,16 +690,20 @@ void desenharCutscene(const SistemaCutscenes *sistema) {
             RAYWHITE
         );
 
+
         return;
     }
 
+
     if (etapa->tipo == ETAPA_CARTELA) {
-        desenharCartela(etapa, sistema->tempoEtapa);
+        desenharCartela(etapa);
         return;
     }
+
 
     if (!sistema->texturaAtual.id)
         return;
+
 
     float progresso = limitar(
         sistema->tempoEtapa / etapa->duracao,
@@ -709,10 +711,13 @@ void desenharCutscene(const SistemaCutscenes *sistema) {
         1.0f
     );
 
+
     float zoom = etapa->zoomInicial +
                  (etapa->zoomFinal - etapa->zoomInicial) * progresso;
 
+
     float alpha = 1.0f;
+
 
     if (etapa->duracao > 0.65f) {
         float entrada = limitar(
@@ -721,17 +726,21 @@ void desenharCutscene(const SistemaCutscenes *sistema) {
             1.0f
         );
 
+
         float saida = limitar(
             (etapa->duracao - sistema->tempoEtapa) / 0.28f,
             0.0f,
             1.0f
         );
 
+
         alpha = fminf(entrada, saida);
     }
 
+
     float largura = LARGURA_MUNDO * zoom;
     float altura = ALTURA_MUNDO * zoom;
+
 
     Rectangle destino = {
         (LARGURA_MUNDO - largura) / 2.0f,
@@ -739,6 +748,7 @@ void desenharCutscene(const SistemaCutscenes *sistema) {
         largura,
         altura
     };
+
 
     DrawTexturePro(
         sistema->texturaAtual,
@@ -754,31 +764,39 @@ void desenharCutscene(const SistemaCutscenes *sistema) {
         ColorAlpha(WHITE, alpha)
     );
 
+
     if (etapa->legenda)
-        desenharLegendaCutscene(etapa->legenda, sistema->tempoEtapa);
+        desenharLegendaCutscene(etapa->legenda);
 }
+
 
 bool cutsceneEstaAtiva(const SistemaCutscenes *sistema) {
     return sistema && sistema->ativa;
 }
 
+
 TipoCutscene cutsceneTipoAtual(const SistemaCutscenes *sistema) {
     return sistema ? sistema->tipo : CUTSCENE_NENHUMA;
 }
+
 
 TipoCutscene consumirCutsceneConcluida(SistemaCutscenes *sistema) {
     if (!sistema)
         return CUTSCENE_NENHUMA;
 
+
     TipoCutscene concluida = sistema->concluida;
     sistema->concluida = CUTSCENE_NENHUMA;
+
 
     return concluida;
 }
 
+
 void liberarCutscenes(SistemaCutscenes *sistema) {
     if (!sistema)
         return;
+
 
     descarregarTexturaAtual(sistema);
     memset(sistema, 0, sizeof *sistema);
