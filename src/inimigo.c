@@ -1,4 +1,3 @@
-
 #include "inimigo.h"
 #include <math.h>
 #include <stdio.h>
@@ -29,7 +28,11 @@ static float distancia(Vector2 inicio, Vector2 fim) {
     return hypotf(fim.x - inicio.x, fim.y - inicio.y);
 }
 
-static bool trechoLivre(const MapaColisao *mapa, Vector2 inicio, Vector2 fim) {
+static bool trechoLivre(
+    const MapaColisao *mapa,
+    Vector2 inicio,
+    Vector2 fim
+) {
     int passos = (int)ceilf(distancia(inicio, fim));
 
     for (int passo = 0; passo <= passos; passo++) {
@@ -47,7 +50,10 @@ static bool trechoLivre(const MapaColisao *mapa, Vector2 inicio, Vector2 fim) {
     return true;
 }
 
-static int celulaProxima(const MapaColisao *mapa, Vector2 ponto) {
+static int celulaProxima(
+    const MapaColisao *mapa,
+    Vector2 ponto
+) {
     int melhor = -1;
     float menor = INFINITY;
 
@@ -83,16 +89,12 @@ static int buscarCaminhos(int sala, int inicio) {
             if (!(ligacoes[sala][atual] & (1 << direcao)))
                 continue;
 
-            int vizinho = atual +
-                passosColuna[direcao] +
-                passosLinha[direcao] * COLUNAS_INIMIGO;
+            int vizinho = atual + passosColuna[direcao] + passosLinha[direcao] * COLUNAS_INIMIGO;
 
             if (anteriores[vizinho] < 0) {
                 anteriores[vizinho] = atual;
                 fila[quantidade++] = vizinho;
-            }
-        }
-    }
+            }}}
 
     return quantidade;
 }
@@ -109,19 +111,13 @@ static int proximaPorta(int origem, int destino) {
 
     int quantidade = 1;
 
-    for (int indice = 0; indice < quantidade; indice++) {
-        for (int porta = 0; porta < quantidadePortas; porta++) {
-            int anterior = portas[porta].origem;
+    for (int indice = 0; indice < quantidade; indice++){
+        for (int porta = 0; porta < quantidadePortas; porta++){
+        int anterior = portas[porta].origem;
 
-            if (portas[porta].destino == salasFila[indice] &&
-                distanciaSala[anterior] < 0) {
-                distanciaSala[anterior] =
-                    distanciaSala[salasFila[indice]] + 1;
-
-                salasFila[quantidade++] = anterior;
-            }
-        }
-    }
+        if (portas[porta].destino == salasFila[indice] && distanciaSala[anterior] < 0) {distanciaSala[anterior] = distanciaSala[salasFila[indice]] + 1;
+            salasFila[quantidade++] = anterior;
+            }}}
 
     for (int porta = 0; porta < quantidadePortas; porta++) {
         if (portas[porta].origem == origem &&
@@ -129,8 +125,7 @@ static int proximaPorta(int origem, int destino) {
             distanciaSala[portas[porta].destino] ==
             distanciaSala[origem] - 1) {
             return porta;
-        }
-    }
+        }}
 
     return -1;
 }
@@ -153,13 +148,13 @@ static void planejarCaminho(
         int celula = fila[indice];
         Vector2 ponto = pontoCelula(celula);
 
-        if (inimigo->porta >= 0 &&
-            !CheckCollisionPointRec(ponto, portas[inimigo->porta].area))
+        if (inimigo->porta >= 0 && !CheckCollisionPointRec(ponto, portas[inimigo->porta].area)) {
             continue;
+        }
 
         float atual = distancia(ponto, alvo);
 
-        if (atual < menor) {
+        if (atual < menor){
             menor = atual;
             destino = celula;
         }
@@ -168,8 +163,7 @@ static void planejarCaminho(
     if (destino < 0 || inicio < 0)
         return;
 
-    while (destino != inicio &&
-           inimigo->quantidade < CELULAS_INIMIGO - 1) {
+    while (destino != inicio && inimigo->quantidade < CELULAS_INIMIGO - 1){
         inimigo->caminho[inimigo->quantidade++] = destino;
 
         int proximoDestino = anteriores[destino];
@@ -182,7 +176,9 @@ static void planejarCaminho(
 
     inimigo->caminho[inimigo->quantidade++] = inicio;
 
-    for (int indice = 0; indice < inimigo->quantidade / 2; indice++) {
+    for (int indice = 0;
+         indice < inimigo->quantidade / 2;
+         indice++) {
         int outro = inimigo->quantidade - indice - 1;
 
         int celula = inimigo->caminho[indice];
@@ -200,37 +196,23 @@ static bool carregarAtaquesDirecao(
     for (int quadro = 0; quadro < QUADROS_ATAQUE; quadro++) {
         char caminho[320];
 
-        snprintf(
-            caminho,
-            sizeof caminho,
-            "assets/personagens/rebobinador/Ataques/%s/reb_ataque_%s%d.png",
-            nomeDirecao,
-            nomeDirecao,
-            quadro + 1
-        );
+        snprintf(caminho, sizeof caminho, "assets/personagens/rebobinador/Ataques/%s/reb_ataque_%s%d.png", nomeDirecao, nomeDirecao, quadro + 1);
 
         inimigo->imagensAtaque[direcao][quadro] = LoadTexture(caminho);
 
         if (!inimigo->imagensAtaque[direcao][quadro].id) {
-            TraceLog(
-                LOG_ERROR,
-                "Nao foi possivel carregar o sprite de ataque: %s",
-                caminho
-            );
-
+            TraceLog(LOG_ERROR, "Nao foi possivel carregar o sprite de ataque: %s",caminho);
             return false;
         }
 
-        SetTextureFilter(
-            inimigo->imagensAtaque[direcao][quadro],
-            TEXTURE_FILTER_POINT
-        );
+        SetTextureFilter(inimigo->imagensAtaque[direcao][quadro], TEXTURE_FILTER_POINT);
     }
 
     return true;
 }
 
-bool iniciarInimigo(Inimigo *inimigo, const MapaColisao mapas[]) {
+bool iniciarInimigo(Inimigo *inimigo, const MapaColisao mapas[]
+){
     if (!inimigo || !mapas)
         return false;
 
@@ -238,8 +220,11 @@ bool iniciarInimigo(Inimigo *inimigo, const MapaColisao mapas[]) {
     memset(ligacoes, 0, sizeof ligacoes);
 
     if (IsAudioDeviceReady()) {
-        inimigo->somPasso = LoadSound("assets/sons/passo_inimigo.wav");
-        inimigo->somAtaque = LoadSound("assets/sons/ataque_inimigo.wav");
+        inimigo->somPasso =
+            LoadSound("assets/sons/passo_inimigo.wav");
+
+        inimigo->somAtaque =
+            LoadSound("assets/sons/ataque_inimigo.wav");
 
         if (!IsSoundValid(inimigo->somPasso) ||
             !IsSoundValid(inimigo->somAtaque)) {
@@ -272,7 +257,7 @@ bool iniciarInimigo(Inimigo *inimigo, const MapaColisao mapas[]) {
 
             Image imagem = LoadImage(caminho);
 
-            if (!imagem.data) {
+            if (!imagem.data){
                 TraceLog(
                     LOG_ERROR,
                     "Nao foi possivel carregar o sprite: %s",
@@ -285,8 +270,7 @@ bool iniciarInimigo(Inimigo *inimigo, const MapaColisao mapas[]) {
 
             ImageAlphaCrop(&imagem, 0.05f);
 
-            inimigo->imagens[direcao][quadro] =
-                LoadTextureFromImage(imagem);
+            inimigo->imagens[direcao][quadro] = LoadTextureFromImage(imagem);
 
             UnloadImage(imagem);
 
@@ -301,64 +285,44 @@ bool iniciarInimigo(Inimigo *inimigo, const MapaColisao mapas[]) {
             );
         }
 
-        if (!carregarAtaquesDirecao(
-            inimigo,
-            direcao,
-            direcoes[direcao]
-        )) {
+        if (!carregarAtaquesDirecao(inimigo, direcao,direcoes[direcao])) {
             liberarInimigo(inimigo);
             return false;
         }
     }
 
     for (int sala = 0; sala < NUM_CENARIOS; sala++) {
-        for (int celula = 0; celula < CELULAS_INIMIGO; celula++)
+        for (int celula = 0; celula < CELULAS_INIMIGO; celula++) {
             livres[sala][celula] =
                 !pesBloqueados(&mapas[sala], pontoCelula(celula));
+        }
 
         for (int celula = 0; celula < CELULAS_INIMIGO; celula++) {
             if (!livres[sala][celula])
                 continue;
 
             for (int direcao = 0; direcao < NUM_DIRECOES; direcao++) {
-                int coluna =
-                    celula % COLUNAS_INIMIGO + passosColuna[direcao];
+                int coluna = celula % COLUNAS_INIMIGO + passosColuna[direcao];
 
-                int linha =
-                    celula / COLUNAS_INIMIGO + passosLinha[direcao];
+                int linha = celula / COLUNAS_INIMIGO + passosLinha[direcao];
 
-                if (coluna < 0 ||
-                    coluna >= COLUNAS_INIMIGO ||
-                    linha < 0 ||
-                    linha >= LINHAS_INIMIGO) {
+                if (coluna < 0 || coluna >= COLUNAS_INIMIGO || linha < 0 || linha >= LINHAS_INIMIGO){
                     continue;
                 }
 
                 int vizinho = linha * COLUNAS_INIMIGO + coluna;
 
-                if (livres[sala][vizinho] &&
-                    trechoLivre(
-                        &mapas[sala],
-                        pontoCelula(celula),
-                        pontoCelula(vizinho)
-                    )) {
+                if (livres[sala][vizinho] && trechoLivre(&mapas[sala], pontoCelula(celula), pontoCelula(vizinho))) {
                     ligacoes[sala][celula] |= 1 << direcao;
-                }
-            }
-        }
-    }
+                }}}}
 
     return true;
 }
 
-void alternarInimigo(
-    Inimigo *inimigo,
-    const MapaColisao mapas[],
-    int sala,
-    Vector2 john
-) {
-    if (!inimigo || !mapas || sala < 0 || sala >= NUM_CENARIOS)
+void alternarInimigo(Inimigo *inimigo, const MapaColisao mapas[], int sala, Vector2 john){
+    if (!inimigo || !mapas || sala < 0 || sala >= NUM_CENARIOS) {
         return;
+    }
 
     if (inimigo->ativo) {
         inimigo->ativo = false;
@@ -398,9 +362,7 @@ void alternarInimigo(
         inimigo->espera = 2.0f;
         inimigo->esperaAtaque = 0;
         inimigo->acertos = 0;
-        inimigo->atingidoFlash = false;
         inimigo->contatoAnterior = false;
-        inimigo->atordoamento = 0;
         inimigo->porta = -1;
 
         return;
@@ -433,59 +395,21 @@ Vector2 moverComPersonagem(
     deslocamento.y /= passos;
 
     for (int passo = 0; passo < passos; passo++) {
-        Vector2 seguinte = moverComColisao(
-            mapa,
-            posicao,
-            (Vector2){deslocamento.x, 0}
+        Vector2 seguinte = moverComColisao(mapa, posicao, (Vector2){deslocamento.x, 0}
         );
 
-        if (!CheckCollisionRecs(caixaPes(seguinte), caixaPes(outro)) ||
-            (CheckCollisionRecs(caixaPes(posicao), caixaPes(outro)) &&
-             distancia(seguinte, outro) > distancia(posicao, outro))) {
+        if (!CheckCollisionRecs(caixaPes(seguinte), caixaPes(outro)) || (CheckCollisionRecs(caixaPes(posicao),caixaPes(outro)) && distancia(seguinte, outro) > distancia(posicao, outro))){
             posicao = seguinte;
         }
 
-        seguinte = moverComColisao(
-            mapa,
-            posicao,
-            (Vector2){0, deslocamento.y}
+        seguinte = moverComColisao(mapa, posicao,(Vector2){0, deslocamento.y}
         );
 
-        if (!CheckCollisionRecs(caixaPes(seguinte), caixaPes(outro)) ||
-            (CheckCollisionRecs(caixaPes(posicao), caixaPes(outro)) &&
-             distancia(seguinte, outro) > distancia(posicao, outro))) {
-            posicao = seguinte;
-        }
-    }
+        if (!CheckCollisionRecs(caixaPes(seguinte), caixaPes(outro)) || (CheckCollisionRecs(caixaPes(posicao), caixaPes(outro)) && distancia(seguinte, outro) > distancia(posicao, outro)))
+            {posicao = seguinte;
+        }}
 
     return posicao;
-}
-
-bool usarFlash(
-    Inimigo *inimigo,
-    const MapaColisao mapas[],
-    int salaJohn,
-    Vector2 john
-) {
-    if (!inimigo || !mapas || salaJohn < 0 || salaJohn >= NUM_CENARIOS ||
-        !inimigo->ativo || inimigo->sala != salaJohn ||
-        inimigo->atordoamento > 0 ||
-        distancia(inimigo->posicao, john) > 140 ||
-        !trechoLivre(&mapas[salaJohn], inimigo->posicao, john)) {
-        return false;
-    }
-
-    inimigo->atacando = false;
-    inimigo->danoAplicado = false;
-    inimigo->ataqueAcertou = false;
-    inimigo->quadroAtaque = 0;
-    inimigo->tempoAtaque = 0.0f;
-    inimigo->atordoamento = 10.0f;
-    inimigo->atingidoFlash = true;
-    inimigo->quadro = 0;
-    inimigo->tempoAnimacao = 0;
-
-    return true;
 }
 
 void atualizarInimigo(
@@ -509,28 +433,21 @@ void atualizarInimigo(
     if (inimigo->atacando)
         return;
 
-    if (inimigo->atordoamento > 0) {
-        inimigo->atordoamento =
-            fmaxf(0, inimigo->atordoamento - tempo);
-        return;
-    }
+    inimigo->esperaTroca = fmaxf(0, inimigo->esperaTroca - tempo);
 
-    inimigo->esperaTroca =
-        fmaxf(0, inimigo->esperaTroca - tempo);
-
-    if (inimigo->espera > 0) {
+    if (inimigo->espera > 0){
         inimigo->espera -= tempo;
         return;
     }
 
-    if (inimigo->sala < 0 || inimigo->sala >= NUM_CENARIOS ||
-        salaJohn < 0 || salaJohn >= NUM_CENARIOS) {
+    if (inimigo->sala < 0 || inimigo->sala >= NUM_CENARIOS || salaJohn < 0 || salaJohn >= NUM_CENARIOS) {
         return;
     }
 
     const MapaColisao *mapa = &mapas[inimigo->sala];
 
-    inimigo->porta = proximaPorta(inimigo->sala, salaJohn);
+    inimigo->porta = proximaPorta(inimigo->sala, salaJohn
+    );
 
     Vector2 alvo = john;
 
@@ -538,18 +455,14 @@ void atualizarInimigo(
         Rectangle area = portas[inimigo->porta].area;
 
         alvo = (Vector2){
-            area.x + area.width / 2,
-            area.y + area.height / 2
+            area.x + area.width / 2, area.y + area.height / 2
         };
     }
 
     int celulaAlvo =
-        (int)(alvo.y / PASSO_INIMIGO) * COLUNAS_INIMIGO +
-        (int)(alvo.x / PASSO_INIMIGO);
+        (int)(alvo.y / PASSO_INIMIGO) * COLUNAS_INIMIGO + (int)(alvo.x / PASSO_INIMIGO);
 
-    if (inimigo->salaAlvo != salaJohn ||
-        inimigo->celulaAlvo != celulaAlvo ||
-        inimigo->tempoParado > 0.4f) {
+    if (inimigo->salaAlvo != salaJohn || inimigo->celulaAlvo != celulaAlvo || inimigo->tempoParado > 0.4f) {
         planejarCaminho(inimigo, mapa, alvo);
 
         inimigo->salaAlvo = salaJohn;
@@ -562,14 +475,9 @@ void atualizarInimigo(
     if (inimigo->porta < 0 &&
         trechoLivre(mapa, inimigo->posicao, john)) {
         destino = john;
-
-    } else if (inimigo->proximo < inimigo->quantidade) {
-        while (inimigo->proximo + 1 < inimigo->quantidade &&
-               trechoLivre(
-                   mapa,
-                   inimigo->posicao,
-                   pontoCelula(inimigo->caminho[inimigo->proximo + 1])
-               )) {
+    }
+    else if (inimigo->proximo < inimigo->quantidade){
+    while (inimigo->proximo + 1 < inimigo->quantidade && trechoLivre(mapa, inimigo->posicao, pontoCelula(inimigo->caminho[inimigo->proximo + 1]))){
             inimigo->proximo++;
         }
 
@@ -582,9 +490,7 @@ void atualizarInimigo(
     if (restante > 0.1f) {
         float velocidade = 110.0f;
 
-        if (inimigo->atingidoFlash)
-            velocidade *= 1.5f;
-        else if (inimigo->acertos >= 2)
+        if (inimigo->acertos >= 2)
             velocidade *= 1.75f;
         else if (quantidadeFitas > 1)
             velocidade *= 1.65f;
@@ -595,26 +501,11 @@ void atualizarInimigo(
             (destino.x - anterior.x) / restante,
             (destino.y - anterior.y) / restante
         };
-
-        inimigo->direcao =
-            fabsf(movimento.x) > fabsf(movimento.y)
-            ? (movimento.x < 0 ? ESQUERDA : DIREITA)
-            : (movimento.y < 0 ? CIMA : BAIXO);
-
-        inimigo->posicao = moverComPersonagem(
-            mapa,
-            anterior,
-            (Vector2){
-                movimento.x * passo,
-                movimento.y * passo
-            },
-            inimigo->sala == salaJohn,
-            john
-        );
+        inimigo->direcao = fabsf(movimento.x) > fabsf(movimento.y)? (movimento.x < 0 ? ESQUERDA : DIREITA) : (movimento.y < 0 ? CIMA : BAIXO);
+        inimigo->posicao = moverComPersonagem(mapa, anterior, (Vector2){movimento.x * passo, movimento.y * passo}, inimigo->sala == salaJohn, john);
     }
 
-    if (distancia(inimigo->posicao, destino) < 0.1f &&
-        inimigo->proximo < inimigo->quantidade) {
+    if (distancia(inimigo->posicao, destino) < 0.1f && inimigo->proximo < inimigo->quantidade) {
         inimigo->proximo++;
     }
 
@@ -622,26 +513,19 @@ void atualizarInimigo(
 
     inimigo->caminhando = deslocamento > 0.01f;
 
-    if (inimigo->caminhando) {
+    if (inimigo->caminhando){
         inimigo->distanciaPasso += deslocamento;
         inimigo->tempoParado = 0;
         inimigo->tempoAnimacao += tempo;
         inimigo->quadro =
             (int)(inimigo->tempoAnimacao / 0.14f) % NUM_QUADROS;
-    } else {
+    } else{
         inimigo->tempoParado += tempo;
         inimigo->tempoAnimacao = 0;
         inimigo->quadro = 0;
     }
 
-    if (inimigo->porta >= 0 &&
-        trocarSala(
-            &inimigo->sala,
-            &inimigo->posicao,
-            &inimigo->direcao,
-            portas[inimigo->porta].direcao,
-            &inimigo->esperaTroca
-        )) {
+    if (inimigo->porta >= 0 && trocarSala(&inimigo->sala, &inimigo->posicao, &inimigo->direcao, portas[inimigo->porta].direcao, &inimigo->esperaTroca)){
         inimigo->salaAlvo = -1;
         inimigo->quantidade = 0;
     }
@@ -650,7 +534,6 @@ void atualizarInimigo(
 static int direcaoParaJohn(Vector2 origem, Vector2 john) {
     float dx = john.x - origem.x;
     float dy = john.y - origem.y;
-
     if (fabsf(dx) > fabsf(dy))
         return dx < 0.0f ? ESQUERDA : DIREITA;
 
@@ -662,7 +545,6 @@ static void aplicarDano(Inimigo *inimigo, int *vida) {
         PlaySound(inimigo->somAtaque);
 
     *vida -= 20;
-
     if (*vida < 0)
         *vida = 0;
 
@@ -670,12 +552,7 @@ static void aplicarDano(Inimigo *inimigo, int *vida) {
     inimigo->ataqueAcertou = true;
 }
 
-static void finalizarAtaque(
-    Inimigo *inimigo,
-    const MapaColisao mapas[],
-    Vector2 john,
-    int salaJohn
-) {
+static void finalizarAtaque(Inimigo *inimigo, const MapaColisao mapas[], Vector2 john, int salaJohn){
     inimigo->atacando = false;
     inimigo->quadroAtaque = 0;
     inimigo->tempoAtaque = 0.0f;
@@ -755,12 +632,7 @@ void atacarJohn(
             inimigo->tempoAtaque >= MOMENTO_IMPACTO_ATAQUE) {
             inimigo->danoAplicado = true;
 
-            bool aindaNoAlcance =
-                inimigo->sala == salaJohn &&
-                salaJohn >= 0 &&
-                salaJohn < NUM_CENARIOS &&
-                distancia(inimigo->posicao, john) <= ALCANCE_IMPACTO_ATAQUE &&
-                trechoLivre(&mapas[salaJohn], inimigo->posicao, john);
+        bool aindaNoAlcance = inimigo->sala == salaJohn && salaJohn >= 0 && salaJohn < NUM_CENARIOS && distancia(inimigo->posicao, john) <= ALCANCE_IMPACTO_ATAQUE && trechoLivre(  &mapas[salaJohn], inimigo->posicao, john);
 
             if (aindaNoAlcance)
                 aplicarDano(inimigo, vida);
@@ -772,36 +644,30 @@ void atacarJohn(
         return;
     }
 
-    inimigo->esperaAtaque =
-        fmaxf(0.0f, inimigo->esperaAtaque - tempo);
+    inimigo->esperaAtaque = fmaxf(0.0f, inimigo->esperaAtaque - tempo);
 
-    if (salaJohn < 0 || salaJohn >= NUM_CENARIOS ||
-        inimigo->sala != salaJohn) {
+    if (salaJohn < 0 || salaJohn >= NUM_CENARIOS || inimigo->sala != salaJohn){
         inimigo->contatoAnterior = false;
         return;
     }
 
-    bool contato =
-        distancia(inimigo->posicao, john) <= ALCANCE_INICIO_ATAQUE;
+    bool contato = distancia(inimigo->posicao, john) <= ALCANCE_INICIO_ATAQUE;
 
-    if (!contato) {
+    if (!contato){
         inimigo->contatoAnterior = false;
         return;
     }
 
-    if (inimigo->contatoAnterior ||
-        inimigo->espera > 0.0f ||
-        inimigo->atordoamento > 0.0f ||
-        inimigo->esperaAtaque > 0.0f ||
-        !trechoLivre(&mapas[salaJohn], inimigo->posicao, john)) {
+    if (inimigo->contatoAnterior || inimigo->espera > 0.0f || inimigo->esperaAtaque > 0.0f || !trechoLivre(&mapas[salaJohn], inimigo->posicao, john)) {
         return;
     }
 
     inimigo->contatoAnterior = true;
     inimigo->atacando = true;
     inimigo->caminhando = false;
-    inimigo->direcaoAtaque =
-        direcaoParaJohn(inimigo->posicao, john);
+
+    inimigo->direcaoAtaque = direcaoParaJohn(inimigo->posicao, john);
+
     inimigo->direcao = inimigo->direcaoAtaque;
     inimigo->quadroAtaque = 0;
     inimigo->tempoAtaque = 0.0f;
@@ -815,24 +681,16 @@ void atualizarSomInimigo(
     Vector2 john,
     bool pausado
 ) {
-    if (!IsSoundValid(inimigo->somPasso))
+    if (!inimigo || !IsSoundValid(inimigo->somPasso))
         return;
 
-    if (pausado ||
-        !inimigo->ativo ||
-        !inimigo->caminhando ||
-        inimigo->atacando ||
-        inimigo->sala != salaJohn ||
-        inimigo->espera > 0 ||
-        inimigo->atordoamento > 0) {
+    if (pausado || !inimigo->ativo || !inimigo->caminhando || inimigo->atacando || inimigo->sala != salaJohn || inimigo->espera > 0) {
         StopSound(inimigo->somPasso);
         inimigo->distanciaPasso = 0;
         return;
     }
 
-    float volume = fmaxf(
-        0,
-        1.0f - distancia(inimigo->posicao, john) / 600.0f
+    float volume = fmaxf(0, 1.0f - distancia(inimigo->posicao, john) / 600.0f
     );
 
     volume = fminf(1.0f, volume * 1.8f);
@@ -840,8 +698,7 @@ void atualizarSomInimigo(
     SetSoundVolume(inimigo->somPasso, volume);
 
     if (inimigo->distanciaPasso >= 60.0f) {
-        inimigo->distanciaPasso =
-            fmodf(inimigo->distanciaPasso, 60.0f);
+        inimigo->distanciaPasso = fmodf(inimigo->distanciaPasso, 60.0f);
 
         if (volume > 0)
             PlaySound(inimigo->somPasso);
@@ -853,8 +710,7 @@ Texture2D imagemInimigo(const Inimigo *inimigo) {
         return (Texture2D){0};
 
     if (inimigo->atacando) {
-        Texture2D ataque =
-            inimigo->imagensAtaque[inimigo->direcaoAtaque][inimigo->quadroAtaque];
+        Texture2D ataque = inimigo->imagensAtaque[inimigo->direcaoAtaque][inimigo->quadroAtaque];
 
         if (ataque.id)
             return ataque;
@@ -873,13 +729,13 @@ void liberarInimigo(Inimigo *inimigo) {
     if (IsSoundValid(inimigo->somAtaque))
         UnloadSound(inimigo->somAtaque);
 
-    for (int direcao = 0; direcao < NUM_DIRECOES; direcao++) {
-        for (int quadro = 0; quadro < NUM_QUADROS; quadro++) {
+    for (int direcao = 0; direcao < NUM_DIRECOES; direcao++){
+        for (int quadro = 0; quadro < NUM_QUADROS; quadro++){
             if (inimigo->imagens[direcao][quadro].id)
                 UnloadTexture(inimigo->imagens[direcao][quadro]);
         }
 
-        for (int quadro = 0; quadro < QUADROS_ATAQUE; quadro++) {
+        for (int quadro = 0; quadro < QUADROS_ATAQUE; quadro++){
             if (inimigo->imagensAtaque[direcao][quadro].id)
                 UnloadTexture(inimigo->imagensAtaque[direcao][quadro]);
         }

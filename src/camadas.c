@@ -2,34 +2,30 @@
 #include <math.h>
 #include <string.h>
 
-
 typedef struct {
     Texture2D textura;
     Vector2 origem;
     float profundidade;
     int sala;
 } Camada;
+
 static Camada camadas[256];
 static int quantidadeCamadas;
 
-
-static bool pontoDentroPoligono(Vector2 p, const Vector2 *v, int quantidade) {
+static bool pontoDentroPoligono(Vector2 p, const Vector2 *v, int quantidade){
     bool atingiu = false;
-    for (int i = 0, j = quantidade - 1; i < quantidade; j = i++) {
-        if ((v[i].y > p.y) != (v[j].y > p.y) &&
-            p.x < (v[j].x - v[i].x) * (p.y - v[i].y) / (v[j].y - v[i].y) + v[i].x)
+    for(int i = 0, j = quantidade - 1; i < quantidade; j = i++){
+        if((v[i].y > p.y) != (v[j].y > p.y) && p.x < (v[j].x - v[i].x) * (p.y - v[i].y) / (v[j].y - v[i].y) + v[i].x)
             atingiu = !atingiu;
     }
     return atingiu;
 }
 
-
-static bool adicionarCamada(const Image *imagensOriginais, int sala, const char *nome,
-                            float profundidade, const Vector2 *pontos, int quantidade) {
-    if (quantidadeCamadas >= (int)(sizeof camadas / sizeof *camadas) || quantidade < 3)
+static bool adicionarCamada(const Image *imagensOriginais, int sala, const char *nome, float profundidade, const Vector2 *pontos, int quantidade){
+    if(quantidadeCamadas >= (int)(sizeof camadas / sizeof *camadas) || quantidade < 3)
         return false;
     float esquerda = LARGURA_MUNDO, topo = ALTURA_MUNDO, direita = 0, base = 0;
-    for (int i = 0; i < quantidade; i++) {
+    for(int i = 0; i < quantidade; i++){
         esquerda = fminf(esquerda, pontos[i].x);
         topo = fminf(topo, pontos[i].y);
         direita = fmaxf(direita, pontos[i].x);
@@ -38,22 +34,20 @@ static bool adicionarCamada(const Image *imagensOriginais, int sala, const char 
     int x = (int)fmaxf(0, floorf(esquerda)), y = (int)fmaxf(0, floorf(topo));
     int largura = (int)fminf(LARGURA_MUNDO, ceilf(direita)) - x;
     int altura = (int)fminf(ALTURA_MUNDO, ceilf(base)) - y;
-    if (largura <= 0 || altura <= 0)
+    if(largura <= 0 || altura <= 0)
         return false;
     Image recorte = GenImageColor(largura, altura, BLANK);
-    if (!recorte.data)
+    if(!recorte.data)
         return false;
     Color *cores = recorte.data;
     const Color *original = imagensOriginais[sala].data;
-    for (int linha = 0; linha < altura; linha++)
-        for (int coluna = 0; coluna < largura; coluna++)
-            if (pontoDentroPoligono((Vector2){x + coluna + .5f, y + linha + .5f}, pontos,
-                                    quantidade))
-                cores[linha * largura + coluna] =
-                    original[(y + linha) * LARGURA_MUNDO + x + coluna];
+    for(int linha = 0; linha < altura; linha++)
+        for(int coluna = 0; coluna < largura; coluna++)
+            if(pontoDentroPoligono((Vector2){x + coluna + .5f, y + linha + .5f}, pontos, quantidade))
+                cores[linha * largura + coluna] = original[(y + linha) * LARGURA_MUNDO + x + coluna];
     Texture2D textura = LoadTextureFromImage(recorte);
     UnloadImage(recorte);
-    if (!textura.id) {
+    if(!textura.id){
         TraceLog(LOG_ERROR, "Falha no recorte visual: %s", nome);
         return false;
     }
@@ -62,25 +56,22 @@ static bool adicionarCamada(const Image *imagensOriginais, int sala, const char 
     return true;
 }
 
-
-void liberarCamadas(void) {
-    for (int i = 0; i < quantidadeCamadas; i++)
+void liberarCamadas(void){
+    for(int i = 0; i < quantidadeCamadas; i++)
         UnloadTexture(camadas[i].textura);
     memset(camadas, 0, sizeof camadas);
     quantidadeCamadas = 0;
 }
 
-
 #define ADICIONAR_CAMADA(sala, nome, profundidade, ...)                                            \
     do {                                                                                           \
         const Vector2 contorno[] = {__VA_ARGS__};                                                  \
-        if (sucesso)                                                                               \
+        if(sucesso)                                                                                \
             sucesso = adicionarCamada(imagensOriginais, sala, nome, profundidade, contorno,        \
                                       (int)(sizeof contorno / sizeof *contorno));                  \
-    } while (0)
+    } while(0)
 
-
-static bool carregarCamadasEscritorio(const Image *imagensOriginais) {
+static bool carregarCamadasEscritorio(const Image *imagensOriginais){
     bool sucesso = true;
     ADICIONAR_CAMADA(ESCRITORIO, "estante lateral esquerda alta", 0, (Vector2){210, 212},
                      {252, 207}, {296, 218}, {302, 269}, {302, 341}, {309, 359}, {309, 575},
@@ -100,8 +91,6 @@ static bool carregarCamadasEscritorio(const Image *imagensOriginais) {
     ADICIONAR_CAMADA(ESCRITORIO, "bobina direita", 0, (Vector2){1381, 408}, {1385, 398},
                      {1399, 394}, {1413, 402}, {1419, 414}, {1415, 427}, {1404, 436}, {1391, 431},
                      {1384, 423});
-
-
     ADICIONAR_CAMADA(ESCRITORIO, "tampo mesa", 403, (Vector2){665, 227}, {1031, 226}, {1104, 273},
                      {1107, 323}, {1101, 334}, {665, 333});
     ADICIONAR_CAMADA(ESCRITORIO, "gaveteiro mesa esquerdo", 403, (Vector2){670, 333}, {770, 334},
@@ -144,8 +133,6 @@ static bool carregarCamadasEscritorio(const Image *imagensOriginais) {
                      {1342, 94}, {1337, 271}, {1255, 274});
     ADICIONAR_CAMADA(ESCRITORIO, "livros traseiros direitos", 280, (Vector2){1116, 181},
                      {1181, 179}, {1185, 208}, {1219, 208}, {1245, 228}, {1236, 277}, {1116, 280});
-
-
     ADICIONAR_CAMADA(ESCRITORIO, "parede lateral esquerda", 0, (Vector2){171, 5}, {208, 3},
                      {207, 44}, {204, 742}, {184, 760}, {161, 757});
     ADICIONAR_CAMADA(ESCRITORIO, "parede lateral direita", 0, (Vector2){1456, 31}, {1501, 28},
@@ -163,8 +150,7 @@ static bool carregarCamadasEscritorio(const Image *imagensOriginais) {
     return sucesso;
 }
 
-
-static bool carregarCamadasSalaoBanheiro(const Image *imagensOriginais) {
+static bool carregarCamadasSalaoBanheiro(const Image *imagensOriginais){
     bool sucesso = true;
     ADICIONAR_CAMADA(SALAO, "Estante central esquerda", 516, (Vector2){321, 413},
                      (Vector2){331, 383}, (Vector2){345, 257}, (Vector2){374, 254},
@@ -190,8 +176,6 @@ static bool carregarCamadasSalaoBanheiro(const Image *imagensOriginais) {
                      (Vector2){1078, 531}, (Vector2){1092, 531}, (Vector2){1092, 522},
                      (Vector2){1178, 522}, (Vector2){1178, 533}, (Vector2){1192, 535},
                      (Vector2){1200, 569}, (Vector2){1194, 675}, (Vector2){1074, 677});
-
-
     ADICIONAR_CAMADA(SALAO, "Balcao horizontal", 649, (Vector2){153, 565}, (Vector2){166, 527},
                      (Vector2){172, 526}, (Vector2){175, 513}, (Vector2){217, 513},
                      (Vector2){220, 528}, (Vector2){434, 527}, (Vector2){432, 575},
@@ -201,8 +185,6 @@ static bool carregarCamadasSalaoBanheiro(const Image *imagensOriginais) {
                      (Vector2){486, 534}, (Vector2){499, 540}, (Vector2){520, 560},
                      (Vector2){512, 709}, (Vector2){500, 786}, (Vector2){411, 780},
                      (Vector2){405, 718}, (Vector2){420, 650}, (Vector2){432, 575});
-
-
     ADICIONAR_CAMADA(SALAO, "Estante fundo esquerda", 275, (Vector2){208, 154}, (Vector2){217, 153},
                      (Vector2){222, 109}, (Vector2){257, 106}, (Vector2){267, 115},
                      (Vector2){275, 103}, (Vector2){300, 99}, (Vector2){311, 107},
@@ -215,18 +197,14 @@ static bool carregarCamadasSalaoBanheiro(const Image *imagensOriginais) {
     ADICIONAR_CAMADA(SALAO, "Estante fundo direita", 216, (Vector2){952, 103}, (Vector2){960, 102},
                      (Vector2){964, 103}, (Vector2){1068, 103}, (Vector2){1078, 111},
                      (Vector2){1082, 211}, (Vector2){954, 216});
-    ADICIONAR_CAMADA(
-        SALAO, "Televisores superiores", 318, (Vector2){1327, 245}, (Vector2){1337, 190},
-        (Vector2){1362, 180}, (Vector2){1367, 124}, (Vector2){1394, 114}, (Vector2){1437, 134},
-        (Vector2){1439, 188}, (Vector2){1420, 194}, (Vector2){1428, 217}, (Vector2){1420, 256},
-        (Vector2){1404, 310}, (Vector2){1394, 318}, (Vector2){1326, 288});
-    ADICIONAR_CAMADA(
-        SALAO, "Televisor pequeno superior", 338, (Vector2){1420, 256},
-        (Vector2){1434, 246}, (Vector2){1464, 263}, (Vector2){1460, 302}, (Vector2){1450, 302},
-        (Vector2){1458, 326}, (Vector2){1437, 338}, (Vector2){1407, 329}, (Vector2){1404, 310},
-        (Vector2){1410, 279});
-
-
+    ADICIONAR_CAMADA(SALAO, "Televisores superiores", 318, (Vector2){1327, 245}, (Vector2){1337, 190},
+                     (Vector2){1362, 180}, (Vector2){1367, 124}, (Vector2){1394, 114}, (Vector2){1437, 134},
+                     (Vector2){1439, 188}, (Vector2){1420, 194}, (Vector2){1428, 217}, (Vector2){1420, 256},
+                     (Vector2){1404, 310}, (Vector2){1394, 318}, (Vector2){1326, 288});
+    ADICIONAR_CAMADA(SALAO, "Televisor pequeno superior", 338, (Vector2){1420, 256},
+                     (Vector2){1434, 246}, (Vector2){1464, 263}, (Vector2){1460, 302}, (Vector2){1450, 302},
+                     (Vector2){1458, 326}, (Vector2){1437, 338}, (Vector2){1407, 329}, (Vector2){1404, 310},
+                     (Vector2){1410, 279});
     ADICIONAR_CAMADA(SALAO, "Estante lateral esquerda superior", 396, (Vector2){92, 289},
                      (Vector2){142, 167}, (Vector2){169, 166}, (Vector2){191, 179},
                      (Vector2){201, 282}, (Vector2){170, 371}, (Vector2){155, 396},
@@ -245,8 +223,6 @@ static bool carregarCamadasSalaoBanheiro(const Image *imagensOriginais) {
     ADICIONAR_CAMADA(SALAO, "Estante lateral direita inferior", 0, (Vector2){1587, 558},
                      (Vector2){1619, 551}, (Vector2){1646, 622}, (Vector2){1644, 733},
                      (Vector2){1609, 772}, (Vector2){1581, 711}, (Vector2){1573, 641});
-
-
     ADICIONAR_CAMADA(SALAO, "Parede lateral esquerda superior", 0, (Vector2){15, 266},
                      (Vector2){137, 33}, (Vector2){146, 42}, (Vector2){106, 141},
                      (Vector2){85, 211}, (Vector2){72, 265}, (Vector2){33, 334},
@@ -257,13 +233,10 @@ static bool carregarCamadasSalaoBanheiro(const Image *imagensOriginais) {
     ADICIONAR_CAMADA(SALAO, "Parede lateral direita", 0, (Vector2){1534, 36}, (Vector2){1656, 266},
                      (Vector2){1655, 736}, (Vector2){1636, 755}, (Vector2){1635, 300},
                      (Vector2){1529, 61});
-    ADICIONAR_CAMADA(
-        SALAO, "Televisores inferiores", 710, (Vector2){1454, 543}, (Vector2){1473, 533},
-        (Vector2){1491, 540}, (Vector2){1519, 544}, (Vector2){1544, 530}, (Vector2){1573, 542},
-        (Vector2){1592, 574}, (Vector2){1583, 627}, (Vector2){1567, 643}, (Vector2){1583, 650},
-        (Vector2){1574, 704}, (Vector2){1534, 710}, (Vector2){1476, 650}, (Vector2){1455, 590});
-
-
+    ADICIONAR_CAMADA(SALAO, "Televisores inferiores", 710, (Vector2){1454, 543}, (Vector2){1473, 533},
+                     (Vector2){1491, 540}, (Vector2){1519, 544}, (Vector2){1544, 530}, (Vector2){1573, 542},
+                     (Vector2){1592, 574}, (Vector2){1583, 627}, (Vector2){1567, 643}, (Vector2){1583, 650},
+                     (Vector2){1574, 704}, (Vector2){1534, 710}, (Vector2){1476, 650}, (Vector2){1455, 590});
     ADICIONAR_CAMADA(SALAO, "Estantes dianteiras esquerdas", 0, (Vector2){105, 774},
                      (Vector2){116, 735}, (Vector2){375, 734}, (Vector2){385, 750},
                      (Vector2){387, 838}, (Vector2){131, 839});
@@ -286,8 +259,6 @@ static bool carregarCamadasSalaoBanheiro(const Image *imagensOriginais) {
     ADICIONAR_CAMADA(SALAO, "Travessa superior da saida", 0, (Vector2){701, 727},
                      (Vector2){972, 727}, (Vector2){977, 742}, (Vector2){977, 765},
                      (Vector2){698, 765}, (Vector2){698, 742});
-
-
     ADICIONAR_CAMADA(BANHEIRO, "Cabine esquerda", 575, (Vector2){188, 329}, (Vector2){331, 330},
                      (Vector2){350, 207}, (Vector2){359, 146}, (Vector2){372, 145},
                      (Vector2){353, 326}, (Vector2){359, 544}, (Vector2){369, 571},
@@ -313,8 +284,6 @@ static bool carregarCamadasSalaoBanheiro(const Image *imagensOriginais) {
                      (Vector2){1398, 721}, (Vector2){1430, 731}, (Vector2){1455, 747},
                      (Vector2){1448, 775}, (Vector2){1440, 799}, (Vector2){1380, 801},
                      (Vector2){1364, 776});
-
-
     ADICIONAR_CAMADA(BANHEIRO, "Parede lateral esquerda", 0, (Vector2){142, 130},
                      (Vector2){181, 129}, (Vector2){195, 31}, (Vector2){232, 31},
                      (Vector2){211, 166}, (Vector2){184, 174}, (Vector2){161, 377},
@@ -337,16 +306,13 @@ static bool carregarCamadasSalaoBanheiro(const Image *imagensOriginais) {
     return sucesso;
 }
 
-
-static bool carregarCamadasEstoqueProjecao(const Image *imagensOriginais) {
+static bool carregarCamadasEstoqueProjecao(const Image *imagensOriginais){
     bool sucesso = true;
-    ADICIONAR_CAMADA(
-        ESTOQUE, "estante central com lona", 647, (Vector2){520, 278}, (Vector2){527, 261},
+    ADICIONAR_CAMADA(ESTOQUE, "estante central com lona", 647, (Vector2){520, 278}, (Vector2){527, 261},
         (Vector2){546, 257}, (Vector2){565, 270}, (Vector2){585, 268}, (Vector2){599, 280},
         (Vector2){605, 313}, (Vector2){601, 342}, (Vector2){600, 644}, (Vector2){519, 647},
         (Vector2){516, 476}, (Vector2){519, 353}, (Vector2){511, 336}, (Vector2){514, 300});
-    ADICIONAR_CAMADA(
-        ESTOQUE, "estante central direita", 617, (Vector2){615, 104}, (Vector2){623, 102},
+    ADICIONAR_CAMADA(ESTOQUE, "estante central direita", 617, (Vector2){615, 104}, (Vector2){623, 102},
         (Vector2){624, 111}, (Vector2){692, 109}, (Vector2){696, 101}, (Vector2){703, 102},
         (Vector2){705, 282}, (Vector2){698, 305}, (Vector2){704, 341}, (Vector2){703, 610},
         (Vector2){692, 616}, (Vector2){691, 603}, (Vector2){626, 609}, (Vector2){624, 617},
@@ -387,8 +353,6 @@ static bool carregarCamadasEstoqueProjecao(const Image *imagensOriginais) {
                      (Vector2){1355, 99}, (Vector2){1361, 107}, (Vector2){1364, 343},
                      (Vector2){1356, 352}, (Vector2){1354, 342}, (Vector2){1218, 342},
                      (Vector2){1218, 363}, (Vector2){1208, 364});
-
-
     ADICIONAR_CAMADA(ESTOQUE, "estante lateral esquerda", 0, (Vector2){173, 244},
                      (Vector2){231, 243}, (Vector2){239, 251}, (Vector2){239, 381},
                      (Vector2){247, 390}, (Vector2){248, 512}, (Vector2){241, 548},
@@ -397,8 +361,7 @@ static bool carregarCamadasEstoqueProjecao(const Image *imagensOriginais) {
     ADICIONAR_CAMADA(ESTOQUE, "caixas esquerda", 0, (Vector2){163, 512}, (Vector2){194, 512},
                      (Vector2){197, 504}, (Vector2){241, 505}, (Vector2){247, 535},
                      (Vector2){247, 598}, (Vector2){157, 599}, (Vector2){155, 547});
-    ADICIONAR_CAMADA(
-        ESTOQUE, "lona canto inferior esquerdo", 0, (Vector2){156, 600}, (Vector2){210, 599},
+    ADICIONAR_CAMADA(ESTOQUE, "lona canto inferior esquerdo", 0, (Vector2){156, 600}, (Vector2){210, 599},
         (Vector2){228, 602}, (Vector2){247, 596}, (Vector2){262, 595}, (Vector2){277, 599},
         (Vector2){291, 595}, (Vector2){305, 605}, (Vector2){325, 605}, (Vector2){333, 625},
         (Vector2){333, 671}, (Vector2){327, 701}, (Vector2){318, 728}, (Vector2){305, 733},
@@ -415,14 +378,12 @@ static bool carregarCamadasEstoqueProjecao(const Image *imagensOriginais) {
                      (Vector2){1509, 507}, (Vector2){1499, 547}, (Vector2){1429, 557},
                      (Vector2){1408, 543}, (Vector2){1399, 421}, (Vector2){1393, 327},
                      (Vector2){1391, 261}, (Vector2){1408, 254});
-    ADICIONAR_CAMADA(
-        ESTOQUE, "caixas direita", 442, (Vector2){1331, 278}, (Vector2){1365, 279},
+    ADICIONAR_CAMADA(ESTOQUE, "caixas direita", 442, (Vector2){1331, 278}, (Vector2){1365, 279},
         (Vector2){1376, 289}, (Vector2){1377, 340}, (Vector2){1387, 350}, (Vector2){1393, 389},
         (Vector2){1380, 407}, (Vector2){1364, 403}, (Vector2){1343, 409},
         (Vector2){1337, 421}, (Vector2){1336, 443}, (Vector2){1320, 442},
         (Vector2){1313, 414}, (Vector2){1314, 349}, (Vector2){1329, 344});
-    ADICIONAR_CAMADA(
-        ESTOQUE, "lixeira direita", 469, (Vector2){1364, 403}, (Vector2){1380, 407},
+    ADICIONAR_CAMADA(ESTOQUE, "lixeira direita", 469, (Vector2){1364, 403}, (Vector2){1380, 407},
         (Vector2){1387, 419}, (Vector2){1384, 454}, (Vector2){1377, 467},
         (Vector2){1358, 469}, (Vector2){1340, 461}, (Vector2){1336, 443},
         (Vector2){1337, 421}, (Vector2){1343, 409});
@@ -454,8 +415,6 @@ static bool carregarCamadasEstoqueProjecao(const Image *imagensOriginais) {
                      (Vector2){970, 781}, (Vector2){1470, 780}, (Vector2){1466, 729},
                      (Vector2){1495, 729}, (Vector2){1497, 807}, (Vector2){970, 822},
                      (Vector2){968, 917}, (Vector2){936, 917});
-
-
     ADICIONAR_CAMADA(SALA_PROJECAO, "mesa central tampo", 407, (Vector2){683, 278},
                      (Vector2){991, 277}, (Vector2){993, 344}, (Vector2){987, 355},
                      (Vector2){681, 355}, (Vector2){678, 340});
@@ -465,8 +424,7 @@ static bool carregarCamadasEstoqueProjecao(const Image *imagensOriginais) {
     ADICIONAR_CAMADA(SALA_PROJECAO, "mesa central gaveteiro direito", 407, (Vector2){923, 353},
                      (Vector2){987, 353}, (Vector2){984, 405}, (Vector2){976, 407},
                      (Vector2){976, 399}, (Vector2){923, 398});
-    ADICIONAR_CAMADA(
-        SALA_PROJECAO, "projetor central", 407, (Vector2){767, 251}, (Vector2){770, 246},
+    ADICIONAR_CAMADA(SALA_PROJECAO, "projetor central", 407, (Vector2){767, 251}, (Vector2){770, 246},
         (Vector2){771, 192}, (Vector2){781, 190}, (Vector2){785, 221}, (Vector2){797, 221},
         (Vector2){799, 237}, (Vector2){812, 237}, (Vector2){816, 242}, (Vector2){837, 242},
         (Vector2){844, 251}, (Vector2){847, 326}, (Vector2){772, 329}, (Vector2){767, 316});
@@ -503,8 +461,7 @@ static bool carregarCamadasEstoqueProjecao(const Image *imagensOriginais) {
                      (Vector2){443, 159}, (Vector2){443, 278}, (Vector2){432, 285},
                      (Vector2){429, 278}, (Vector2){347, 280}, (Vector2){343, 270},
                      (Vector2){345, 172}, (Vector2){352, 168});
-    ADICIONAR_CAMADA(
-        SALA_PROJECAO, "bobina pedestal fundo esquerda", 274, (Vector2){579, 99},
+    ADICIONAR_CAMADA(SALA_PROJECAO, "bobina pedestal fundo esquerda", 274, (Vector2){579, 99},
         (Vector2){598, 83}, (Vector2){620, 81}, (Vector2){640, 92}, (Vector2){650, 113},
         (Vector2){651, 136}, (Vector2){642, 151}, (Vector2){633, 157}, (Vector2){637, 181},
         (Vector2){652, 184}, (Vector2){659, 270}, (Vector2){582, 274}, (Vector2){578, 191},
@@ -515,8 +472,7 @@ static bool carregarCamadasEstoqueProjecao(const Image *imagensOriginais) {
                      (Vector2){1074, 184}, (Vector2){1090, 189}, (Vector2){1091, 269},
                      (Vector2){1010, 272}, (Vector2){1010, 191}, (Vector2){1036, 181},
                      (Vector2){1037, 157}, (Vector2){1022, 145}, (Vector2){1018, 126});
-    ADICIONAR_CAMADA(
-        SALA_PROJECAO, "estantes laterais esquerdas", 0, (Vector2){332, 278}, (Vector2){345, 266},
+    ADICIONAR_CAMADA(SALA_PROJECAO, "estantes laterais esquerdas", 0, (Vector2){332, 278}, (Vector2){345, 266},
         (Vector2){366, 265}, (Vector2){383, 273}, (Vector2){386, 290}, (Vector2){381, 317},
         (Vector2){390, 331}, (Vector2){388, 420}, (Vector2){407, 428}, (Vector2){450, 435},
         (Vector2){453, 514}, (Vector2){445, 541}, (Vector2){425, 557}, (Vector2){384, 551},
@@ -534,14 +490,12 @@ static bool carregarCamadasEstoqueProjecao(const Image *imagensOriginais) {
     ADICIONAR_CAMADA(SALA_PROJECAO, "caixa frontal esquerda", 0, (Vector2){375, 629},
                      (Vector2){451, 629}, (Vector2){459, 646}, (Vector2){452, 740},
                      (Vector2){439, 754}, (Vector2){360, 742}, (Vector2){356, 682});
-    ADICIONAR_CAMADA(
-        SALA_PROJECAO, "bobinas inferiores esquerdas", 0, (Vector2){297, 700}, (Vector2){317, 690},
+    ADICIONAR_CAMADA(SALA_PROJECAO, "bobinas inferiores esquerdas", 0, (Vector2){297, 700}, (Vector2){317, 690},
         (Vector2){336, 695}, (Vector2){346, 708}, (Vector2){348, 732}, (Vector2){357, 721},
         (Vector2){370, 713}, (Vector2){387, 716}, (Vector2){397, 730}, (Vector2){400, 744},
         (Vector2){411, 735}, (Vector2){425, 736}, (Vector2){435, 745}, (Vector2){436, 771},
         (Vector2){290, 771}, (Vector2){290, 733}, (Vector2){288, 718});
-    ADICIONAR_CAMADA(
-        SALA_PROJECAO, "estantes laterais direitas", 0, (Vector2){1271, 201}, (Vector2){1291, 201},
+    ADICIONAR_CAMADA(SALA_PROJECAO, "estantes laterais direitas", 0, (Vector2){1271, 201}, (Vector2){1291, 201},
         (Vector2){1308, 212}, (Vector2){1311, 230}, (Vector2){1305, 247}, (Vector2){1319, 250},
         (Vector2){1323, 270}, (Vector2){1331, 289}, (Vector2){1340, 314}, (Vector2){1342, 364},
         (Vector2){1364, 389}, (Vector2){1368, 420}, (Vector2){1394, 448}, (Vector2){1400, 521},
@@ -593,98 +547,84 @@ static bool carregarCamadasEstoqueProjecao(const Image *imagensOriginais) {
     return sucesso;
 }
 
-
 #undef ADICIONAR_CAMADA
 
-
-bool iniciarCamadas(void) {
+bool iniciarCamadas(void){
     liberarCamadas();
     Image imagensOriginais[NUM_CENARIOS] = {0};
     bool sucesso = true;
-    for (int i = 0; i < NUM_CENARIOS; i++) {
+    for(int i = 0; i < NUM_CENARIOS; i++){
         imagensOriginais[i] = LoadImage(salas[i].imagem);
-        if (!imagensOriginais[i].data || imagensOriginais[i].width != LARGURA_MUNDO ||
-            imagensOriginais[i].height != ALTURA_MUNDO) {
+        if(!imagensOriginais[i].data || imagensOriginais[i].width != LARGURA_MUNDO || imagensOriginais[i].height != ALTURA_MUNDO){
             sucesso = false;
             break;
         }
         ImageFormat(&imagensOriginais[i], PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
     }
-    if (sucesso) {
+    if(sucesso){
         sucesso = carregarCamadasEscritorio(imagensOriginais) &&
                   carregarCamadasSalaoBanheiro(imagensOriginais) &&
                   carregarCamadasEstoqueProjecao(imagensOriginais);
     }
-    for (int i = 0; i < NUM_CENARIOS; i++)
-        if (imagensOriginais[i].data)
+    for(int i = 0; i < NUM_CENARIOS; i++)
+        if(imagensOriginais[i].data)
             UnloadImage(imagensOriginais[i]);
-    if (!sucesso)
+    if(!sucesso)
         liberarCamadas();
     return sucesso;
 }
 
-
-void desenharJohnComCamadas(Texture2D fundo, Texture2D john, int sala, Vector2 posicao) {
+void desenharJohnComCamadas(Texture2D fundo, Texture2D john, int sala, Vector2 posicao){
     (void)fundo;
-    if (!john.id || john.height <= 0)
+    if(!john.id || john.height <= 0)
         return;
     float largura = ALTURA_JOHN * john.width / john.height;
     Rectangle personagem = {posicao.x - largura / 2, posicao.y - ALTURA_JOHN, largura, ALTURA_JOHN};
-    DrawTexturePro(john, (Rectangle){0, 0, john.width, john.height}, personagem, (Vector2){0, 0}, 0,
-                   WHITE);
-
-
-    for (int fixa = 0; fixa < 2; fixa++) {
-        for (int i = 0; i < quantidadeCamadas; i++) {
+    DrawTexturePro(john, (Rectangle){0, 0, john.width, john.height}, personagem, (Vector2){0, 0}, 0, WHITE);
+    for(int fixa = 0; fixa < 2; fixa++){
+        for(int i = 0; i < quantidadeCamadas; i++){
             const Camada *f = &camadas[i];
-            if (f->sala != sala || (f->profundidade == 0) != fixa ||
-                (f->profundidade > 0 && posicao.y >= f->profundidade))
+            if(f->sala != sala || (f->profundidade == 0) != fixa || (f->profundidade > 0 && posicao.y >= f->profundidade))
                 continue;
             Rectangle limites = {f->origem.x, f->origem.y, f->textura.width, f->textura.height};
-            if (CheckCollisionRecs(personagem, limites))
+            if(CheckCollisionRecs(personagem, limites))
                 DrawTextureV(f->textura, f->origem, WHITE);
         }
     }
 }
 
-void desenharPersonagensComCamadas(Texture2D john, Vector2 posicaoJohn,
-    Texture2D inimigo, Vector2 posicaoInimigo, int sala) {
+void desenharPersonagensComCamadas(Texture2D john, Vector2 posicaoJohn, Texture2D inimigo, Vector2 posicaoInimigo, int sala){
     Texture2D imagens[] = {john, inimigo};
     Vector2 posicoes[] = {posicaoJohn, posicaoInimigo};
-    if (posicaoJohn.y > posicaoInimigo.y) {
+    if(posicaoJohn.y > posicaoInimigo.y){
         imagens[0] = inimigo;
         imagens[1] = john;
         posicoes[0] = posicaoInimigo;
         posicoes[1] = posicaoJohn;
     }
     float profundidadeAnterior = -1;
-    for (int personagem = 0; personagem < 3; personagem++) {
+    for(int personagem = 0; personagem < 3; personagem++){
         float profundidade = personagem < 2 ? posicoes[personagem].y : INFINITY;
-        for (int indice = 0; indice < quantidadeCamadas; indice++) {
+        for(int indice = 0; indice < quantidadeCamadas; indice++){
             const Camada *camada = &camadas[indice];
-            if (camada->sala == sala && camada->profundidade > 0 &&
-                camada->profundidade > profundidadeAnterior && camada->profundidade <= profundidade)
+            if(camada->sala == sala && camada->profundidade > 0 && camada->profundidade > profundidadeAnterior && camada->profundidade <= profundidade)
                 DrawTextureV(camada->textura, camada->origem, WHITE);
         }
-        if (personagem < 2) {
+        if(personagem < 2){
             Texture2D imagem = imagens[personagem];
             bool ehRebobinador = inimigo.id != 0 && imagem.id == inimigo.id;
             float altura = ALTURA_JOHN;
-
-            if (ehRebobinador)
+            if(ehRebobinador)
                 altura *= 1.30f;
-
             float largura = altura * imagem.width / imagem.height;
-            Rectangle destino = {posicoes[personagem].x - largura / 2.0f,
-                posicoes[personagem].y - altura, largura, altura};
-            DrawTexturePro(imagem, (Rectangle){0, 0, imagem.width, imagem.height},
-                destino, (Vector2){0, 0}, 0, WHITE);
+            Rectangle destino = {posicoes[personagem].x - largura / 2.0f, posicoes[personagem].y - altura, largura, altura};
+            DrawTexturePro(imagem, (Rectangle){0, 0, imagem.width, imagem.height}, destino, (Vector2){0, 0}, 0, WHITE);
         }
         profundidadeAnterior = profundidade;
     }
-    for (int indice = 0; indice < quantidadeCamadas; indice++) {
+    for(int indice = 0; indice < quantidadeCamadas; indice++){
         const Camada *camada = &camadas[indice];
-        if (camada->sala == sala && camada->profundidade == 0)
+        if(camada->sala == sala && camada->profundidade == 0)
             DrawTextureV(camada->textura, camada->origem, WHITE);
     }
 }

@@ -3,7 +3,6 @@
 #include <math.h>
 #include <string.h>
 
-
 static bool prepararMapaColisao(MapaColisao *mapa, const char *caminho, int sala) {
     memset(mapa, 0, sizeof *mapa);
     mapa->sala = sala;
@@ -28,16 +27,14 @@ static bool prepararMapaColisao(MapaColisao *mapa, const char *caminho, int sala
         return false;
     }
 
-
     for (int y = 0; y < mapa->altura; y++) {
         uint32_t linha = 0;
         for (int x = 0; x < mapa->largura; x++) {
-
-
-            bool exterior = sala >= 0 && (!pontoDentroChao(sala, (Vector2){x + .001f, y + .001f}) ||
-                                          !pontoDentroChao(sala, (Vector2){x + .999f, y + .001f}) ||
-                                          !pontoDentroChao(sala, (Vector2){x + .001f, y + .999f}) ||
-                                          !pontoDentroChao(sala, (Vector2){x + .999f, y + .999f}));
+            bool exterior =
+                !pontoDentroChao(sala, (Vector2){x + .001f, y + .001f}) ||
+                !pontoDentroChao(sala, (Vector2){x + .999f, y + .001f}) ||
+                !pontoDentroChao(sala, (Vector2){x + .001f, y + .999f}) ||
+                !pontoDentroChao(sala, (Vector2){x + .999f, y + .999f});
             linha += p[y * mapa->largura + x].a != 0 || exterior;
             mapa->somas[(y + 1) * (mapa->largura + 1) + x + 1] =
                 linha + mapa->somas[y * (mapa->largura + 1) + x + 1];
@@ -49,18 +46,11 @@ static bool prepararMapaColisao(MapaColisao *mapa, const char *caminho, int sala
     return true;
 }
 
-
-bool carregarMapaColisao(MapaColisao *mapa, const char *caminho) {
-    return prepararMapaColisao(mapa, caminho, -1);
-}
-
-
 bool carregarColisoesSala(MapaColisao *mapa, int sala) {
-    if (sala < 0 || sala >= NUM_CENARIOS)
+    if (!mapa || sala < 0 || sala >= NUM_CENARIOS)
         return false;
     return prepararMapaColisao(mapa, salas[sala].mascara, sala);
 }
-
 
 static bool cruzaLimitePorta(const MapaColisao *mapa, Rectangle r) {
     Vector2 cantos[4] = {
@@ -78,12 +68,13 @@ static bool cruzaLimitePorta(const MapaColisao *mapa, Rectangle r) {
     return false;
 }
 
-
 void liberarColisoes(MapaColisao *mapa) {
+    if (!mapa)
+        return;
+
     free(mapa->somas);
     memset(mapa, 0, sizeof *mapa);
 }
-
 
 bool retanguloBloqueado(const MapaColisao *mapa, Rectangle r) {
     if (!isfinite(r.x) || !isfinite(r.y) || !isfinite(r.width) || !isfinite(r.height) ||
@@ -98,7 +89,6 @@ bool retanguloBloqueado(const MapaColisao *mapa, Rectangle r) {
     if (!mapa->pronto)
         return true;
 
-
     if (cruzaLimitePorta(mapa, r))
         return true;
     int s = mapa->largura + 1;
@@ -107,16 +97,13 @@ bool retanguloBloqueado(const MapaColisao *mapa, Rectangle r) {
            0;
 }
 
-
 bool pesBloqueados(const MapaColisao *mapa, Vector2 p) {
     return retanguloBloqueado(mapa, caixaPes(p));
 }
 
-
 Vector2 moverComColisao(const MapaColisao *mapa, Vector2 p, Vector2 d) {
     if (!isfinite(d.x) || !isfinite(d.y) || pesBloqueados(mapa, p))
         return p;
-
 
     float distancia = fmaxf(fabsf(d.x), fabsf(d.y));
     if (distancia > 100000)

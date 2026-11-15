@@ -2,139 +2,96 @@
 #include "mundo.h"
 
 static Texture2D fundo;
-static int opcaoSelecionada;
-static const Rectangle botoes[3] = {
-    {520, 590, 632, 62},
-    {520, 665, 632, 62},
-    {520, 740, 632, 62}
+static int opcaoDerrotaSelecionada = 0;
+
+static const Rectangle botoesDerrota[] = {
+    {480, 505, 710, 68}, {480, 590, 710, 68}, {480, 675, 710, 68}
 };
 
-static bool sobreBotao(int indice) {
-    if (indice < 0 || indice >= 3)
-        return false;
-
-    Vector2 cursor = telaParaMundo(
-        GetMousePosition(),
-        areaExibicao(GetScreenWidth(), GetScreenHeight())
-    );
-
-    return CheckCollisionPointRec(cursor, botoes[indice]);
+static Vector2 mouseNoMundo(void){
+    return telaParaMundo(GetMousePosition(), areaExibicao(GetScreenWidth(), GetScreenHeight()));
 }
 
-bool carregarDerrota(void) {
+static AcaoDerrota acaoDaOpcaoDerrota(int opcao){
+    switch(opcao){
+        case 0:
+            return ACAO_DERROTA_TENTAR_NOVAMENTE;
+        case 1:
+            return ACAO_DERROTA_MENU_PRINCIPAL;
+        case 2:
+            return ACAO_DERROTA_SAIR;
+        default:
+            return ACAO_DERROTA_NENHUMA;
+    }
+}
+
+bool carregarDerrota(void){
+    if(fundo.id)
+        UnloadTexture(fundo);
     fundo = LoadTexture("assets/ui/game_over.png");
-    opcaoSelecionada = 0;
+    opcaoDerrotaSelecionada = 0;
     return fundo.id != 0;
 }
 
-void descarregarDerrota(void) {
-    if (fundo.id)
+void descarregarDerrota(void){
+    if(fundo.id)
         UnloadTexture(fundo);
-
     fundo = (Texture2D){0};
 }
 
-void reiniciarMenuDerrota(void) {
-    opcaoSelecionada = 0;
+void reiniciarMenuDerrota(void){
+    opcaoDerrotaSelecionada = 0;
 }
 
-AcaoDerrota atualizarMenuDerrota(void) {
-    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W))
-        opcaoSelecionada = (opcaoSelecionada + 2) % 3;
-
-    if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S))
-        opcaoSelecionada = (opcaoSelecionada + 1) % 3;
-
-    if (IsKeyPressed(KEY_ESCAPE))
+AcaoDerrota atualizarMenuDerrota(void){
+    if(IsKeyPressed(KEY_ESCAPE))
         return ACAO_DERROTA_MENU_PRINCIPAL;
-
-    for (int i = 0; i < 3; i++) {
-        if (sobreBotao(i) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-            return (AcaoDerrota)i;
+    if(IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)){
+        opcaoDerrotaSelecionada = (opcaoDerrotaSelecionada - 1 + 3) % 3;
     }
-
-    if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
-        return (AcaoDerrota)opcaoSelecionada;
-
+    if(IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)){
+        opcaoDerrotaSelecionada = (opcaoDerrotaSelecionada + 1) % 3;
+    }
+    Vector2 mouse = mouseNoMundo();
+    for(int i = 0; i < 3; i++){
+        if(CheckCollisionPointRec(mouse, botoesDerrota[i])){
+            opcaoDerrotaSelecionada = i;
+            if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+                return acaoDaOpcaoDerrota(i);
+        }
+    }
+    if(IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER) || IsKeyPressed(KEY_SPACE)){
+        return acaoDaOpcaoDerrota(opcaoDerrotaSelecionada);
+    }
     return ACAO_DERROTA_NENHUMA;
 }
 
-void desenharDerrota(void) {
-    if (fundo.id) {
-        DrawTexturePro(
-            fundo,
-            (Rectangle){0, 0, fundo.width, fundo.height},
-            (Rectangle){0, 0, LARGURA_MUNDO, ALTURA_MUNDO},
-            (Vector2){0},
-            0,
-            WHITE
-        );
-    } else {
+void desenharDerrota(void){
+    if(fundo.id){
+        DrawTexturePro(fundo, (Rectangle){0, 0, (float)fundo.width, (float)fundo.height}, (Rectangle){0, 0, LARGURA_MUNDO, ALTURA_MUNDO}, (Vector2){0, 0}, 0, WHITE);
+    } 
+    else{
         ClearBackground(BLACK);
     }
-
-    DrawRectangle(0, 0, LARGURA_MUNDO, ALTURA_MUNDO, (Color){0, 0, 0, 170});
-    DrawRectangle(330, 170, 1012, 650, (Color){5, 6, 12, 235});
+    DrawRectangle(0, 0, LARGURA_MUNDO, ALTURA_MUNDO, (Color){0, 0, 0, 185});
+    DrawRectangle(330, 170, 1012, 650, (Color){5, 6, 12, 245});
     DrawRectangleLinesEx((Rectangle){330, 170, 1012, 650}, 4, RED);
-
     const char *titulo = "SINAL PERDIDO";
     const char *mensagem = "JOHN FOI ABSORVIDO PELA FITA.";
     const char *descricao = "A sessao terminou antes que a transmissao pudesse ser interrompida.";
-
-    DrawText(
-        titulo,
-        (LARGURA_MUNDO - MeasureText(titulo, 62)) / 2,
-        235,
-        62,
-        RED
-    );
-
-    DrawText(
-        mensagem,
-        (LARGURA_MUNDO - MeasureText(mensagem, 28)) / 2,
-        350,
-        28,
-        RAYWHITE
-    );
-
-    DrawText(
-        descricao,
-        (LARGURA_MUNDO - MeasureText(descricao, 20)) / 2,
-        420,
-        20,
-        LIGHTGRAY
-    );
-
-    const char *opcoes[3] = {
-        "TENTAR NOVAMENTE",
-        "MENU PRINCIPAL",
-        "SAIR"
-    };
-
-    for (int i = 0; i < 3; i++) {
-        bool selecionado = i == opcaoSelecionada || sobreBotao(i);
-        Color fundoBotao = selecionado
-            ? (Color){105, 12, 24, 245}
-            : (Color){16, 12, 18, 240};
-        Color texto = selecionado ? WHITE : LIGHTGRAY;
-
-        DrawRectangleRec(botoes[i], fundoBotao);
-        DrawRectangleLinesEx(
-            botoes[i],
-            2,
-            selecionado ? RED : (Color){95, 42, 50, 255}
-        );
-
-        if (selecionado)
-            DrawText(">", (int)botoes[i].x + 28, (int)botoes[i].y + 15, 30, RED);
-
-        int largura = MeasureText(opcoes[i], 25);
-        DrawText(
-            opcoes[i],
-            (int)(botoes[i].x + (botoes[i].width - largura) / 2),
-            (int)botoes[i].y + 18,
-            25,
-            texto
-        );
+    DrawText(titulo, (LARGURA_MUNDO - MeasureText(titulo, 62)) / 2, 220, 62, RED);
+    DrawText(mensagem, (LARGURA_MUNDO - MeasureText(mensagem, 28)) / 2, 315, 28, RAYWHITE);
+    DrawText(descricao, (LARGURA_MUNDO - MeasureText(descricao, 20)) / 2, 375, 20, LIGHTGRAY);
+    const char *opcoes[] = {"TENTAR NOVAMENTE", "MENU PRINCIPAL", "SAIR"};
+    Vector2 mouse = mouseNoMundo();
+    
+    for(int i = 0; i < 3; i++){
+        Rectangle area = botoesDerrota[i];
+        bool mouseSobre = CheckCollisionPointRec(mouse, area);
+        bool selecionado = i == opcaoDerrotaSelecionada || mouseSobre;
+        DrawRectangleRec(area, selecionado ? (Color){95, 12, 26, 250} : (Color){30, 12, 18, 250});
+        DrawRectangleLinesEx(area, selecionado ? 3.0f : 1.5f, selecionado ? GOLD : RED);
+        DrawText(opcoes[i], (int)(area.x + (area.width - MeasureText(opcoes[i], 25)) / 2), (int)area.y + 21, 25, selecionado ? GOLD : RAYWHITE);
     }
+    DrawText("SETAS: NAVEGAR     ENTER: SELECIONAR", 590, 775, 19, LIGHTGRAY);
 }

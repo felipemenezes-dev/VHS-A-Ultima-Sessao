@@ -1,22 +1,16 @@
 #include "objetos.h"
 #include <math.h>
-#include <string.h>
-
+#include <stddef.h>
 
 #define ALCANCE_COLETA 82.0f
 #define ALCANCE_APARELHO_VHS 110.0f
 #define ALCANCE_TECLADO_SAIDA 185.0f
 #define TAMANHO_OBJETO 76.0f
 #define TAMANHO_BILHETE 76.0f
-
-
 #define TECLADO_SAIDA_X 985.0f
 #define TECLADO_SAIDA_Y 746.0f
-
-
 #define PORTA_SAIDA_X 836.0f
 #define PORTA_SAIDA_Y 840.0f
-
 
 typedef struct {
     int id;
@@ -32,503 +26,202 @@ typedef struct {
     Texture2D textura;
 } ObjetoMapa;
 
-
 static ObjetoMapa objetos[] = {
-    {
-        ID_KIT_MEDICO,
-        SALAO,
-        "Kit medico",
-        "Recupera 30 pontos de vida quando usado com Q.",
-        "assets/objetos/kit_medico.png",
-        {470, 640},
-        TAMANHO_OBJETO,
-        true, true, false
-    },
-    {
-        ID_FITA_17,
-        BANHEIRO,
-        "A Chamada",
-        "Fita VHS com frequencia 17.",
-        "assets/objetos/fita_17.png",
-        {1318, 433},
-        TAMANHO_OBJETO,
-        true, true, false
-    },
-    {
-        ID_CHAVE_ESTOQUE,
-        ESCRITORIO,
-        "Chave do estoque",
-        "Chave que libera a porta do estoque.",
-        "assets/objetos/chave_estoque.png",
-        {1008, 445},
-        TAMANHO_OBJETO,
-        true, true, false
-    },
-    {
-        ID_FITA_42,
-        ESTOQUE,
-        "O Corredor",
-        "Fita VHS com frequencia 42.",
-        "assets/objetos/fita_42.png",
-        {1306, 586},
-        TAMANHO_OBJETO,
-        true, true, false
-    },
-    {
-        ID_FUSIVEL,
-        ESTOQUE,
-        "Fusivel",
-        "Componente necessario para restaurar a energia.",
-        "assets/objetos/fusivel.png",
-        {1333, 743},
-        TAMANHO_OBJETO,
-        true, true, false
-    },
-    {
-        ID_QUADRO_ELETRICO,
-        ESTOQUE,
-        "Quadro eletrico",
-        "Quadro que recebe o fusivel.",
-        NULL,
-        {248, 301},
-        TAMANHO_OBJETO,
-        false, true, false
-    },
-    {
-        ID_FITA_89,
-        SALA_PROJECAO,
-        "Sala Vazia",
-        "Fita VHS com frequencia 89.",
-        "assets/objetos/fita_89.png",
-        {1172, 326},
-        TAMANHO_OBJETO,
-        true, true, false
-    },
-    {
-        ID_BATERIA_FLASH,
-        SALA_PROJECAO,
-        "Bateria do flash",
-        "Adiciona duas cargas ao flash.",
-        "assets/objetos/bateria_flash.png",
-        {458, 594},
-        TAMANHO_OBJETO,
-        true, true, false
-    },
-    {
-        ID_BILHETE_GERENTE,
-        ESCRITORIO,
-        "Bilhete do gerente",
-        "Bilhete deixado pelo antigo gerente.",
-        "assets/objetos/bilhete_gerente.png",
-        {708, 445},
-        TAMANHO_BILHETE,
-        false, true, false
-    },
-    {
-        ID_APARELHO_VHS,
-        ESCRITORIO,
-        "Aparelho VHS",
-        "Dispositivo utilizado para reconstruir a transmissao.",
-        NULL,
-        {870, 345},
-        TAMANHO_OBJETO,
-        false, true, false
-    },
-    {
-        ID_TECLADO_SAIDA,
-        SALAO,
-        "Teclado da saida",
-        "Teclado eletronico da porta principal.",
-        "assets/objetos/teclado_saida.png",
-        {TECLADO_SAIDA_X, TECLADO_SAIDA_Y},
-        TAMANHO_OBJETO,
-        false, true, false
-    }
+    {ID_KIT_MEDICO, SALAO, "Kit medico", "Recupera 30 pontos de vida quando usado com Q.", "assets/objetos/kit_medico.png", {470, 640}, TAMANHO_OBJETO, true, true, false, {0}},
+    {ID_FITA_17, BANHEIRO, "A Chamada", "Fita VHS com frequencia 17.", "assets/objetos/fita_17.png", {1318, 433}, TAMANHO_OBJETO, true, true, false, {0}},
+    {ID_CHAVE_ESTOQUE, ESCRITORIO, "Chave do estoque", "Chave que libera a porta do estoque.", "assets/objetos/chave_estoque.png", {1008, 445}, TAMANHO_OBJETO, true, true, false, {0}},
+    {ID_FITA_42, ESTOQUE, "O Corredor", "Fita VHS com frequencia 42.", "assets/objetos/fita_42.png", {1306, 586}, TAMANHO_OBJETO, true, true, false, {0}},
+    {ID_FUSIVEL, ESTOQUE, "Fusivel", "Componente necessario para restaurar a energia.", "assets/objetos/fusivel.png", {1333, 743}, TAMANHO_OBJETO, true, true, false, {0}},
+    {ID_QUADRO_ELETRICO, ESTOQUE, "Quadro eletrico", "Quadro que recebe o fusivel.", NULL, {248, 301}, TAMANHO_OBJETO, false, true, false, {0}},
+    {ID_FITA_89, SALA_PROJECAO, "Sala Vazia", "Fita VHS com frequencia 89.", "assets/objetos/fita_89.png", {1172, 326}, TAMANHO_OBJETO, true, true, false, {0}},
+    {ID_BILHETE_GERENTE, ESCRITORIO, "Bilhete do gerente", "Bilhete deixado pelo antigo gerente.", "assets/objetos/bilhete_gerente.png", {708, 445}, TAMANHO_BILHETE, false, true, false, {0}},
+    {ID_APARELHO_VHS, ESCRITORIO, "Aparelho VHS", "Dispositivo utilizado para reconstruir a transmissao.", NULL, {870, 345}, TAMANHO_OBJETO, false, true, false, {0}},
+    {ID_TECLADO_SAIDA, SALAO, "Teclado da saida", "Teclado eletronico da porta principal.", "assets/objetos/teclado_saida.png", {TECLADO_SAIDA_X, TECLADO_SAIDA_Y}, TAMANHO_OBJETO, false, true, false, {0}}
 };
 
-
-static int quantidadeObjetos(void) {
+static int quantidadeObjetos(void){
     return (int)(sizeof objetos / sizeof objetos[0]);
 }
 
-
-static ObjetoMapa *encontrarObjetoPorId(int id) {
-    for (int i = 0; i < quantidadeObjetos(); i++) {
-        if (objetos[i].id == id)
+static ObjetoMapa *encontrarObjetoPorId(int id){
+    for(int i = 0; i < quantidadeObjetos(); i++){
+        if(objetos[i].id == id)
             return &objetos[i];
     }
     return NULL;
 }
 
-
-static float alcanceObjeto(const ObjetoMapa *objeto) {
-    if (!objeto)
+static float alcanceObjeto(const ObjetoMapa *objeto){
+    if(!objeto)
         return 0.0f;
-
-
-    if (objeto->id == ID_APARELHO_VHS)
+    if(objeto->id == ID_APARELHO_VHS)
         return ALCANCE_APARELHO_VHS;
-
-    if (objeto->id == ID_TECLADO_SAIDA)
+    if(objeto->id == ID_TECLADO_SAIDA)
         return ALCANCE_TECLADO_SAIDA;
-
     return ALCANCE_COLETA;
 }
 
-
-static ObjetoMapa *encontrarObjetoProximo(int sala, Vector2 personagem) {
+static ObjetoMapa *encontrarObjetoProximo(int sala, Vector2 personagem){
     ObjetoMapa *maisProximo = NULL;
     float menorDistancia = ALCANCE_COLETA;
-
-
-    for (int i = 0; i < quantidadeObjetos(); i++) {
+    for(int i = 0; i < quantidadeObjetos(); i++){
         ObjetoMapa *objeto = &objetos[i];
-
-
-        if (!objeto->coletavel || objeto->coletado || objeto->sala != sala)
+        if(!objeto->coletavel || objeto->coletado || objeto->sala != sala)
             continue;
-
-
-        float distancia = hypotf(
-            personagem.x - objeto->posicao.x,
-            personagem.y - objeto->posicao.y
-        );
-
-
-        if (distancia <= menorDistancia) {
+        float distancia = hypotf(personagem.x - objeto->posicao.x, personagem.y - objeto->posicao.y);
+        if(distancia <= menorDistancia){
             menorDistancia = distancia;
             maisProximo = objeto;
         }
     }
-
-
     return maisProximo;
 }
 
-
-static ObjetoMapa *encontrarInteracaoProxima(int sala, Vector2 personagem) {
+static ObjetoMapa *encontrarInteracaoProxima(int sala, Vector2 personagem){
     ObjetoMapa *maisProximo = NULL;
     float menorDistancia = 1000000.0f;
-
-
-    for (int i = 0; i < quantidadeObjetos(); i++) {
+    for(int i = 0; i < quantidadeObjetos(); i++){
         ObjetoMapa *objeto = &objetos[i];
-
-
-        if (!objeto->interativo || objeto->coletado || objeto->sala != sala)
+        if(!objeto->interativo || objeto->coletado || objeto->sala != sala)
             continue;
-
-
-        float distancia = hypotf(
-            personagem.x - objeto->posicao.x,
-            personagem.y - objeto->posicao.y
-        );
-
-
-        if (distancia <= alcanceObjeto(objeto) && distancia < menorDistancia) {
+        float distancia = hypotf(personagem.x - objeto->posicao.x, personagem.y - objeto->posicao.y);
+        if(distancia <= alcanceObjeto(objeto) && distancia < menorDistancia){
             menorDistancia = distancia;
             maisProximo = objeto;
         }
     }
-
-
     return maisProximo;
 }
 
-
-static bool objetoEstaProximo(int id, int sala, Vector2 personagem) {
+static bool objetoEstaProximo(int id, int sala, Vector2 personagem){
     ObjetoMapa *objeto = encontrarObjetoPorId(id);
-
-
-    if (!objeto || objeto->sala != sala || objeto->coletado)
+    if(!objeto || objeto->sala != sala || objeto->coletado)
         return false;
-
-
-    float distancia = hypotf(
-        personagem.x - objeto->posicao.x,
-        personagem.y - objeto->posicao.y
-    );
-
-
+    float distancia = hypotf(personagem.x - objeto->posicao.x, personagem.y - objeto->posicao.y);
     return distancia <= alcanceObjeto(objeto);
 }
 
-
-bool bilheteGerenteProximo(int sala, Vector2 personagem) {
+bool bilheteGerenteProximo(int sala, Vector2 personagem){
     return objetoEstaProximo(ID_BILHETE_GERENTE, sala, personagem);
 }
 
-
-bool quadroEletricoProximo(int sala, Vector2 personagem) {
+bool quadroEletricoProximo(int sala, Vector2 personagem){
     return objetoEstaProximo(ID_QUADRO_ELETRICO, sala, personagem);
 }
 
-
-bool aparelhoVhsProximo(int sala, Vector2 personagem) {
+bool aparelhoVhsProximo(int sala, Vector2 personagem){
     return objetoEstaProximo(ID_APARELHO_VHS, sala, personagem);
 }
 
-
-bool tecladoSaidaProximo(int sala, Vector2 personagem) {
+bool tecladoSaidaProximo(int sala, Vector2 personagem){
     return objetoEstaProximo(ID_TECLADO_SAIDA, sala, personagem);
 }
 
-
-bool portaSaidaProxima(int sala, Vector2 personagem) {
-    if (sala != SALAO)
+bool portaSaidaProxima(int sala, Vector2 personagem){
+    if(sala != SALAO)
         return false;
-
-
-    float distancia = hypotf(
-        personagem.x - PORTA_SAIDA_X,
-        personagem.y - PORTA_SAIDA_Y
-    );
-
-
+    float distancia = hypotf(personagem.x - PORTA_SAIDA_X, personagem.y - PORTA_SAIDA_Y);
     return distancia <= 100.0f;
 }
 
-
-bool carregarObjetosMapa(void) {
+bool carregarObjetosMapa(void){
     bool sucesso = true;
-
-
-    for (int i = 0; i < quantidadeObjetos(); i++) {
-        if (!objetos[i].caminho)
+    for(int i = 0; i < quantidadeObjetos(); i++){
+        if(!objetos[i].caminho)
             continue;
-
-
         objetos[i].textura = LoadTexture(objetos[i].caminho);
-
-
-        if (!objetos[i].textura.id) {
-            TraceLog(
-                LOG_ERROR,
-                "Nao foi possivel carregar o objeto: %s",
-                objetos[i].caminho
-            );
+        if(!objetos[i].textura.id){
+            TraceLog(LOG_ERROR, "Nao foi possivel carregar o objeto: %s", objetos[i].caminho);
             sucesso = false;
         } else {
-            SetTextureFilter(
-                objetos[i].textura,
-                TEXTURE_FILTER_POINT
-            );
+            SetTextureFilter(objetos[i].textura, TEXTURE_FILTER_POINT);
         }
     }
-
-
-    if (!sucesso)
+    if(!sucesso)
         liberarObjetosMapa();
-
-
     reiniciarObjetosMapa();
-
-
     return sucesso;
 }
 
-
-void reiniciarObjetosMapa(void) {
-    for (int i = 0; i < quantidadeObjetos(); i++)
+void reiniciarObjetosMapa(void){
+    for(int i = 0; i < quantidadeObjetos(); i++)
         objetos[i].coletado = false;
 }
 
-
-void marcarObjetoConcluido(int id) {
+void marcarObjetoConcluido(int id){
     ObjetoMapa *objeto = encontrarObjetoPorId(id);
-    if (objeto && !objeto->coletavel)
+    if(objeto && !objeto->coletavel)
         objeto->coletado = true;
 }
 
-
-void liberarObjetosMapa(void) {
-    for (int i = 0; i < quantidadeObjetos(); i++) {
-        if (objetos[i].textura.id)
+void liberarObjetosMapa(void){
+    for(int i = 0; i < quantidadeObjetos(); i++){
+        if(objetos[i].textura.id)
             UnloadTexture(objetos[i].textura);
-
-
         objetos[i].textura = (Texture2D){0};
     }
 }
 
-
-void desenharObjetosMapa(int sala) {
-    for (int i = 0; i < quantidadeObjetos(); i++) {
+void desenharObjetosMapa(int sala){
+    for(int i = 0; i < quantidadeObjetos(); i++){
         const ObjetoMapa *objeto = &objetos[i];
-
-
-        if (objeto->sala != sala ||
-            (objeto->coletavel && objeto->coletado) ||
-            !objeto->textura.id)
+        if(objeto->sala != sala || (objeto->coletavel && objeto->coletado) || !objeto->textura.id)
             continue;
-
-
-        Rectangle origem = {
-            0,
-            0,
-            (float)objeto->textura.width,
-            (float)objeto->textura.height
-        };
-
-
-        Rectangle destino = {
-            objeto->posicao.x - objeto->tamanho / 2.0f,
-            objeto->posicao.y - objeto->tamanho / 2.0f,
-            objeto->tamanho,
-            objeto->tamanho
-        };
-
-
-        DrawTexturePro(
-            objeto->textura,
-            origem,
-            destino,
-            (Vector2){0, 0},
-            0,
-            WHITE
-        );
+        Rectangle origem = {0, 0, (float)objeto->textura.width, (float)objeto->textura.height};
+        Rectangle destino = {objeto->posicao.x - objeto->tamanho / 2.0f, objeto->posicao.y - objeto->tamanho / 2.0f, objeto->tamanho, objeto->tamanho};
+        DrawTexturePro(objeto->textura, origem, destino, (Vector2){0, 0}, 0, WHITE);
     }
 }
 
-
-void desenharIndicacaoColeta(int sala, Vector2 personagem) {
+void desenharIndicacaoColeta(int sala, Vector2 personagem){
     ObjetoMapa *objeto = encontrarInteracaoProxima(sala, personagem);
-
-
-    if (!objeto)
+    if(!objeto)
         return;
-
-
     const char *texto = "E - COLETAR";
-
-
-    if (objeto->id == ID_BILHETE_GERENTE)
+    if(objeto->id == ID_BILHETE_GERENTE)
         texto = "E - LER BILHETE";
-    else if (objeto->id == ID_QUADRO_ELETRICO)
+    else if(objeto->id == ID_QUADRO_ELETRICO)
         texto = "E - INSTALAR FUSIVEL";
-    else if (objeto->id == ID_APARELHO_VHS)
+    else if(objeto->id == ID_APARELHO_VHS)
         texto = "E - RECONSTRUIR TRANSMISSAO";
-    else if (objeto->id == ID_TECLADO_SAIDA)
+    else if(objeto->id == ID_TECLADO_SAIDA)
         texto = "E - USAR TECLADO";
-
-
     int larguraTexto = MeasureText(texto, 18);
     float larguraCaixa = (float)larguraTexto + 24.0f;
-
-
     float x = objeto->posicao.x - larguraCaixa / 2.0f;
     float y = objeto->posicao.y - objeto->tamanho / 2.0f - 34.0f;
-
-
-    if (x < 4)
+    if(x < 4)
         x = 4;
-
-
-    if (x + larguraCaixa > LARGURA_MUNDO - 4)
+    if(x + larguraCaixa > LARGURA_MUNDO - 4)
         x = LARGURA_MUNDO - larguraCaixa - 4;
-
-
-    DrawRectangleRec(
-        (Rectangle){x, y, larguraCaixa, 28},
-        (Color){8, 8, 12, 225}
-    );
-
-
-    DrawRectangleLinesEx(
-        (Rectangle){x, y, larguraCaixa, 28},
-        2,
-        (Color){220, 190, 125, 255}
-    );
-
-
-    DrawText(
-        texto,
-        (int)x + 12,
-        (int)y + 5,
-        18,
-        RAYWHITE
-    );
+    DrawRectangleRec((Rectangle){x, y, larguraCaixa, 28}, (Color){8, 8, 12, 225});
+    DrawRectangleLinesEx((Rectangle){x, y, larguraCaixa, 28}, 2, (Color){220, 190, 125, 255});
+    DrawText(texto, (int)x + 12, (int)y + 5, 18, RAYWHITE);
 }
 
-
-bool coletarObjetoProximo(
-    int sala,
-    Vector2 personagem,
-    Inventario *inventario,
-    int *idColetado
-) {
-    if (!inventario)
+bool coletarObjetoProximo(int sala, Vector2 personagem, Inventario *inventario, int *idColetado){
+    if(!inventario)
         return false;
-
-
     ObjetoMapa *objeto = encontrarObjetoProximo(sala, personagem);
-
-
-    if (!objeto)
+    if(!objeto)
         return false;
-
-
     ResultadoInventario resultado;
-
-
-    if (objeto->id == ID_FITA_17) {
-        resultado = inventarioAdicionarFita(
-            inventario,
-            ID_FITA_17,
-            "A Chamada",
-            17,
-            4
-        );
-    } else if (objeto->id == ID_FITA_42) {
-        resultado = inventarioAdicionarFita(
-            inventario,
-            ID_FITA_42,
-            "O Corredor",
-            42,
-            1
-        );
-    } else if (objeto->id == ID_FITA_89) {
-        resultado = inventarioAdicionarFita(
-            inventario,
-            ID_FITA_89,
-            "Sala Vazia",
-            89,
-            7
-        );
+    if(objeto->id == ID_FITA_17){
+        resultado = inventarioAdicionarFita(inventario, ID_FITA_17, "A Chamada", 17, 4);
+    } else if(objeto->id == ID_FITA_42){
+        resultado = inventarioAdicionarFita(inventario, ID_FITA_42, "O Corredor", 42, 1);
+    } else if(objeto->id == ID_FITA_89){
+        resultado = inventarioAdicionarFita(inventario, ID_FITA_89, "Sala Vazia", 89, 7);
     } else {
-        resultado = inventarioAdicionarObjeto(
-            inventario,
-            objeto->id,
-            objeto->nome,
-            objeto->descricao,
-            objeto->id == ID_KIT_MEDICO || objeto->id == ID_BATERIA_FLASH
-        );
+        resultado = inventarioAdicionarObjeto(inventario, objeto->id, objeto->nome, objeto->descricao, objeto->id == ID_KIT_MEDICO);
     }
-
-
-    if (resultado != INVENTARIO_OK) {
-        TraceLog(
-            LOG_WARNING,
-            "Nao foi possivel guardar o objeto: %s",
-            objeto->nome
-        );
+    if(resultado != INVENTARIO_OK){
+        TraceLog(LOG_WARNING, "Nao foi possivel guardar o objeto: %s", objeto->nome);
         return false;
     }
-
-
     objeto->coletado = true;
-
-
-    if (idColetado)
+    if(idColetado)
         *idColetado = objeto->id;
-
-
-    TraceLog(
-        LOG_INFO,
-        "Objeto coletado: %s",
-        objeto->nome
-    );
-
-
+    TraceLog(LOG_INFO, "Objeto coletado: %s", objeto->nome);
     return true;
 }

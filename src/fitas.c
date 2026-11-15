@@ -42,7 +42,6 @@ bool inserirFita(Fita **lista, int id, const char *nome, int frequencia, int dig
     }
 
     Fita *nova = malloc(sizeof *nova);
-
     if (!nova)
         return false;
 
@@ -58,7 +57,6 @@ bool inserirFita(Fita **lista, int id, const char *nome, int frequencia, int dig
     }
 
     Fita *ultima = *lista;
-
     while (ultima->proxima)
         ultima = ultima->proxima;
 
@@ -91,22 +89,42 @@ bool removerFita(Fita **lista, int id) {
 }
 
 void ordenarFitasPorInsercao(Fita **lista) {
-    if (!lista)
+    if (!lista || !*lista || !(*lista)->proxima)
         return;
 
-    Fita *ordenada = NULL;
+    Fita *ordenada = *lista;
+    Fita *chave = ordenada->proxima;
+    Fita *ultimaOrdenada = ordenada;
 
-    while (*lista) {
-        Fita *atual = *lista;
-        *lista = atual->proxima;
+    ordenada->proxima = NULL;
 
-        Fita **posicao = &ordenada;
+    while (chave) {
+        Fita *proxima = chave->proxima;
+        chave->proxima = NULL;
 
-        while (*posicao && (*posicao)->frequencia <= atual->frequencia)
-            posicao = &(*posicao)->proxima;
+        if (ultimaOrdenada->frequencia <= chave->frequencia) {
+            ultimaOrdenada->proxima = chave;
+            ultimaOrdenada = chave;
+        } else {
 
-        atual->proxima = *posicao;
-        *posicao = atual;
+
+            Fita *j = ordenada;
+            Fita *anterior = NULL;
+
+            while (j && j->frequencia <= chave->frequencia) {
+                anterior = j;
+                j = j->proxima;
+            }
+
+            chave->proxima = j;
+
+            if (!anterior)
+                ordenada = chave;
+            else
+                anterior->proxima = chave;
+        }
+
+        chave = proxima;
     }
 
     *lista = ordenada;

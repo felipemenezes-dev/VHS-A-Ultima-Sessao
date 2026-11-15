@@ -5,23 +5,26 @@
 #include "inventario.h"
 
 typedef struct {
-    bool aberto;
     Inventario dados;
     int selecionado;
 } TelaInventario;
 
 bool iniciarTelaInventario(TelaInventario *inventario);
 void liberarTelaInventario(TelaInventario *inventario);
-bool atualizarTelaInventario(TelaInventario *inventario, bool teclaTab, bool teclaEsc);
-void selecionarEspacoInventario(
+
+void selecionarItemInventario(
     TelaInventario *inventario,
-    int passoHorizontal,
-    int passoVertical,
-    bool clique,
-    Vector2 cursor,
+    int passo
+);
+
+const ObjetoInventario *inventarioObjetoSelecionado(
+    const TelaInventario *inventario
+);
+
+void desenharInventario(
+    const TelaInventario *inventario,
     int largura,
     int altura
 );
-void desenharInventario(const TelaInventario *inventario, int largura, int altura);
 
 #endif

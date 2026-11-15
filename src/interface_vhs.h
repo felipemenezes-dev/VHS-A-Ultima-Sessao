@@ -22,7 +22,7 @@ void abrirInterfaceVHS(InterfaceVHS *interface);
 void atualizarInterfaceVHS(InterfaceVHS *interface, Inventario *inventario, float delta);
 void desenharInterfaceVHS(const InterfaceVHS *interface, const Inventario *inventario);
 bool interfaceVHSEstaAberta(const InterfaceVHS *interface);
-bool interfaceVHSReconstruida(const InterfaceVHS *interface);
+
 const char *interfaceVHSCodigo(const InterfaceVHS *interface);
 
 #endif

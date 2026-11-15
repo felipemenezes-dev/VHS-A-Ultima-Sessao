@@ -32,7 +32,7 @@ bool iniciarCutscene(SistemaCutscenes *sistema, TipoCutscene tipo);
 void atualizarCutscene(SistemaCutscenes *sistema, float delta);
 void desenharCutscene(const SistemaCutscenes *sistema);
 bool cutsceneEstaAtiva(const SistemaCutscenes *sistema);
-TipoCutscene cutsceneTipoAtual(const SistemaCutscenes *sistema);
+
 TipoCutscene consumirCutsceneConcluida(SistemaCutscenes *sistema);
 void liberarCutscenes(SistemaCutscenes *sistema);
 
