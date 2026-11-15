@@ -52,9 +52,3 @@ Sobreviva ao Rebobinador e escape da locadora.
 - `src/`: código-fonte C e arquivos de cabeçalho.
 - `assets/`: imagens, cenários, personagens e sons utilizados no jogo.
 - `build/vhs`: executável gerado pelo Makefile.
-
-## Créditos dos efeitos sonoros
-
-O efeito sonoro de teclado utiliza gravações reais de "Keyboard Typing", de Wandering Door Games, licenciadas sob CC-BY-SA 4.0.
-
-Fonte: https://opengameart.org/content/keyboard-typing
