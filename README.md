@@ -1,29 +1,60 @@
 # VHS — A Última Sessão
 
-Jogo em C99 com Raylib, com código em português.
+Jogo de terror desenvolvido em C99 com Raylib, com código e interface em português.
 
 ## Executar no WSL
 
-Na pasta `/home/danilo/projetos/VHS-A-Ultima-Sessao`:
+Na raiz do projeto, execute:
 
 ```sh
 make executar
 ```
 
-`make run` também funciona. Para somente compilar, use `make`.
-A Raylib deve estar em `$HOME/.local`; para outra instalação,
-use `make RAYLIB=/caminho/da/raylib`.
+O comando `make run` também funciona. Para somente compilar, use:
 
-## Arquivos
+```sh
+make
+```
 
-- `src/`: código C e cabeçalhos do jogo.
-- `assets/`: imagens atuais e imagens preparadas para as próximas etapas.
+A Raylib deve estar instalada em `$HOME/.local`. Para utilizar outra instalação:
+
+```sh
+make RAYLIB=/caminho/da/raylib
+```
+
+## Controles
+
+| Tecla | Ação |
+|---|---|
+| W, A, S, D / Setas | Movimentar John |
+| E | Interagir com objetos e cenários |
+| Z / X | Selecionar item no inventário |
+| Roda do mouse | Alternar item selecionado |
+| F | Usar o kit médico selecionado |
+| Q | Atalho para usar o kit médico |
+| Esc | Abrir o menu de pausa durante a exploração |
+| F1 | Mostrar ou ocultar as colisões |
+
+No menu de pausa, use as setas e Enter para navegar. Esc seleciona Continuar. Ao escolher voltar ao menu principal, o jogo solicita confirmação.
+
+Nas interfaces do aparelho VHS e do teclado, Esc fecha a interface atual. Nas telas secundárias do menu principal, Esc retorna à tela anterior.
+
+As telas de vitória e derrota oferecem opções navegáveis pelas setas e confirmadas com Enter.
+
+## Objetivo
+
+Explore a Videolocadora Aurora, encontre as três fitas VHS, reconstrua a transmissão no aparelho VHS e descubra o código necessário para liberar a saída.
+
+Sobreviva ao Rebobinador e escape da locadora.
+
+## Estrutura dos arquivos
+
+- `src/`: código-fonte C e arquivos de cabeçalho.
+- `assets/`: imagens, cenários, personagens e sons utilizados no jogo.
 - `build/vhs`: executável gerado pelo Makefile.
 
-WASD ou setas movimentam John. Tab abre e fecha o inventário.
-Esc fecha o inventário ou encerra o jogo se ele já estiver fechado.
-F1 mostra as colisões e F11 alterna a tela cheia.
+## Créditos dos efeitos sonoros
 
-O efeito de teclado usa gravações reais de "Keyboard Typing", de Wandering
-Door Games, licenciadas sob CC-BY-SA 4.0:
-https://opengameart.org/content/keyboard-typing
+O efeito sonoro de teclado utiliza gravações reais de "Keyboard Typing", de Wandering Door Games, licenciadas sob CC-BY-SA 4.0.
+
+Fonte: https://opengameart.org/content/keyboard-typing
