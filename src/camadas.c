@@ -1,6 +1,5 @@
 #include "camadas.h"
 #include <math.h>
-#include <string.h>
 
 typedef struct {
     Texture2D textura;
@@ -59,7 +58,8 @@ static bool adicionarCamada(const Image *imagensOriginais, int sala, const char 
 void liberarCamadas(void){
     for(int i = 0; i < quantidadeCamadas; i++)
         UnloadTexture(camadas[i].textura);
-    memset(camadas, 0, sizeof camadas);
+    for (int i = 0; i < (int)(sizeof camadas / sizeof camadas[0]); i++)
+        camadas[i] = (Camada){0};
     quantidadeCamadas = 0;
 }
 

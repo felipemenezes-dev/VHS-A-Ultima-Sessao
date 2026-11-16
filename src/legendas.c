@@ -60,18 +60,21 @@ void desenharLegendas(void){
     int textoY = posY + 15;
     const char *inicioLinha = textoVisivel;
     while(*inicioLinha != '\0'){
-        const char *fimLinha = strchr(inicioLinha, '\n');
-        int tamanhoLinha = fimLinha != NULL ? (int)(fimLinha - inicioLinha) : (int)strlen(inicioLinha);
+        const char *fimLinha = inicioLinha;
+        while(*fimLinha != '\0' && *fimLinha != '\n')
+            fimLinha++;
+        int tamanhoLinha = (int)(fimLinha - inicioLinha);
         char linha[512];
         if(tamanhoLinha >= (int)sizeof(linha))
             tamanhoLinha = (int)sizeof(linha) - 1;
-        memcpy(linha, inicioLinha, (size_t)tamanhoLinha);
+        for(int i = 0; i < tamanhoLinha; i++)
+            linha[i] = inicioLinha[i];
         linha[tamanhoLinha] = '\0';
         int larguraTexto = MeasureText(linha, tamanhoFonte);
         int textoX = (larguraTela - larguraTexto) / 2;
         DrawText(linha, textoX, textoY, tamanhoFonte, WHITE);
         textoY += tamanhoFonte + espacamento;
-        if(fimLinha == NULL)
+        if(*fimLinha == '\0')
             break;
         inicioLinha = fimLinha + 1;
     }

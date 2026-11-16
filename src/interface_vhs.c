@@ -2,7 +2,6 @@
 #include "interface_vhs.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #define QUANTIDADE_FITAS INVENTARIO_MAX_FITAS
 #define PAINEL_X 205
@@ -88,7 +87,8 @@ static Fita *copiarListaFitas(const Fita *original){
 static void reiniciarTentativa(InterfaceVHS *interface, const Inventario *inventario){
     if(!interface)
         return;
-    memset(interface->fitasInseridas, 0, sizeof interface->fitasInseridas);
+    for (int i = 0; i < QUANTIDADE_FITAS; i++)
+        interface->fitasInseridas[i] = 0;
     interface->etapaInsercao = 0;
     interface->sequenciaIncorreta = false;
     interface->fitaSelecionada = proximaFitaDisponivel(interface, inventario, 0, 1);

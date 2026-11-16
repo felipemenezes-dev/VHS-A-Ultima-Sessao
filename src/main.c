@@ -12,8 +12,6 @@
 #include "objetos.h"
 #include <math.h>
 #include <stdio.h>
-#include <string.h>
-#include <unistd.h>
 #include "legendas.h"
 #include "cutscenes.h"
 
@@ -37,22 +35,7 @@ static Texture2D carregarImagemPersonagem(const char *caminho){
     return textura;
 }
 
-static void localizarRecursos(void){
-    if(FileExists("assets/cenarios/salao_principal.png"))
-        return;
-    char caminho[4096];
-    ssize_t quantidade = readlink("/proc/self/exe", caminho, sizeof caminho - 1);
-    if(quantidade <= 0)
-        return;
-    caminho[quantidade] = '\0';
-    char *barra = strrchr(caminho, '/');
-    if(!barra)
-        return;
-    *barra = '\0';
-    if(ChangeDirectory(caminho) && !FileExists("assets/cenarios/salao_principal.png")){
-        ChangeDirectory("..");
-    }
-}
+
 
 static bool tentarCruzarLinhaSaida(int sala, Vector2 posicaoAnterior, Vector2 deslocamento, bool saidaLiberada){
     if(!saidaLiberada || sala != SALAO || deslocamento.y <= 0.0f)
@@ -155,7 +138,6 @@ static void mostrarLegendaObjeto(int idObjeto){
 }
 
 int main(void){
-    localizarRecursos();
     int monitor = GetCurrentMonitor();
     int larguraTela = GetMonitorWidth(monitor);
     int alturaTela = GetMonitorHeight(monitor);

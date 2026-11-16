@@ -31,6 +31,24 @@ typedef struct {
 #define CARTELA(tempo, tituloTexto, corpoTexto) {-1, tempo, 1.0f, 1.0f, ETAPA_CARTELA, tituloTexto, corpoTexto, NULL}
 #define FX(tempo, tipoEtapa, tituloTexto, corpoTexto) {-1, tempo, 1.0f, 1.0f, tipoEtapa, tituloTexto, corpoTexto, NULL}
 
+
+static const char *nomeArquivoCaminho(const char *caminho){
+    const char *nome = caminho;
+    for (const char *atual = caminho; *atual != '\0'; atual++){
+        if (*atual == '/')
+            nome = atual + 1;
+    }
+    return nome;
+}
+
+static const char *procurarCaractere(const char *texto, char caractere){
+    for (const char *atual = texto; *atual != '\0'; atual++){
+        if (*atual == caractere)
+            return atual;
+    }
+    return NULL;
+}
+
 static const char *const prefixos[CUTSCENE_TOTAL_IMAGENS] = {
     "CUT1.1_", "CUT1.2_", "CUT1.3_", "CUT1.4_",
     "CUT2.1_", "CUT2.2_", "CUT2.3_", "CUT2.4", "CUT2.5_", "CUT2.6", "CUT2.7_", "CUT2.8_", "CUT2.9_",
@@ -167,7 +185,7 @@ static bool carregarTexturaEtapa(SistemaCutscenes *sistema, int imagem){
 bool carregarCutscenes(SistemaCutscenes *sistema){
     if(!sistema)
         return false;
-    memset(sistema, 0, sizeof *sistema);
+    *sistema = (SistemaCutscenes){0};
     sistema->imagemAtual = -1;
     FilePathList arquivos = LoadDirectoryFiles("assets/cutscenes");
     if(arquivos.count == 0){
@@ -181,8 +199,7 @@ bool carregarCutscenes(SistemaCutscenes *sistema){
         size_t tamanhoPrefixo = strlen(prefixos[imagem]);
         for(unsigned int indice = 0; indice < arquivos.count; indice++){
             const char *caminho = arquivos.paths[indice];
-            const char *nome = strrchr(caminho, '/');
-            nome = nome ? nome + 1 : caminho;
+            const char *nome = nomeArquivoCaminho(caminho);
             if(strncmp(nome, prefixos[imagem], tamanhoPrefixo) == 0){
                 snprintf(sistema->caminhos[imagem], sizeof sistema->caminhos[imagem], "%s", caminho);
                 encontrada = true;
@@ -195,8 +212,10 @@ bool carregarCutscenes(SistemaCutscenes *sistema){
         }
     }
     UnloadDirectoryFiles(arquivos);
-    if(!sucesso)
-        memset(sistema->caminhos, 0, sizeof sistema->caminhos);
+    if(!sucesso){
+        for(int imagem = 0; imagem < CUTSCENE_TOTAL_IMAGENS; imagem++)
+            sistema->caminhos[imagem][0] = '\0';
+    }
     return sucesso;
 }
 
@@ -269,11 +288,12 @@ static void desenharTextoCentralizado(const char *texto, int y, int tamanho, Col
     const char *inicio = texto;
     char linha[512];
     while(*inicio){
-        const char *fim = strchr(inicio, '\n');
+        const char *fim = procurarCaractere(inicio, '\n');
         size_t quantidade = fim ? (size_t)(fim - inicio) : strlen(inicio);
         if(quantidade >= sizeof linha)
             quantidade = sizeof linha - 1;
-        memcpy(linha, inicio, quantidade);
+        for(size_t i = 0; i < quantidade; i++)
+            linha[i] = inicio[i];
         linha[quantidade] = '\0';
         int largura = MeasureText(linha, tamanho);
         DrawText(linha, (LARGURA_MUNDO - largura) / 2, y, tamanho, cor);
@@ -398,6 +418,6 @@ void liberarCutscenes(SistemaCutscenes *sistema){
     if(!sistema)
         return;
     descarregarTexturaAtual(sistema);
-    memset(sistema, 0, sizeof *sistema);
+    *sistema = (SistemaCutscenes){0};
     sistema->imagemAtual = -1;
 }

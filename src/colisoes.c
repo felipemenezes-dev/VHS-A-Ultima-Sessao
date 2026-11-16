@@ -1,10 +1,9 @@
 #include "colisoes.h"
 #include <stdlib.h>
 #include <math.h>
-#include <string.h>
 
 static bool prepararMapaColisao(MapaColisao *mapa, const char *caminho, int sala) {
-    memset(mapa, 0, sizeof *mapa);
+    *mapa = (MapaColisao){0};
     mapa->sala = sala;
     Image imagemCarregada = LoadImage(caminho);
     if (!imagemCarregada.data)
@@ -73,7 +72,7 @@ void liberarColisoes(MapaColisao *mapa) {
         return;
 
     free(mapa->somas);
-    memset(mapa, 0, sizeof *mapa);
+    *mapa = (MapaColisao){0};
 }
 
 bool retanguloBloqueado(const MapaColisao *mapa, Rectangle r) {
