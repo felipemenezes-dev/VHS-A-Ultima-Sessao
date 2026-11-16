@@ -16,7 +16,7 @@ static bool iniciandoFade = false;
 
 bool carregarMenu(void){
     if(IsAudioDeviceReady() && musicaMenu.stream.buffer == NULL){
-        musicaMenu = LoadMusicStream("assets/sons/musica_menu.wav");
+        musicaMenu = LoadMusicStream("assets/sons/musica_menu.mp3");
         if(musicaMenu.stream.buffer != NULL)
             musicaMenu.looping = true;
     }

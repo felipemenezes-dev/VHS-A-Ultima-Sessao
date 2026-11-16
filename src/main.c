@@ -149,7 +149,7 @@ int main(void){
     Music musicaJogo = {0};
     bool musicaJogoIniciada = false;
     if(IsAudioDeviceReady()){
-        musicaJogo = LoadMusicStream("assets/sons/musica_jogo.wav");
+        musicaJogo = LoadMusicStream("assets/sons/musica_jogo.mp3");
         if(IsMusicValid(musicaJogo)){
             musicaJogo.looping = true;
             SetMusicVolume(musicaJogo, 0.35f);
