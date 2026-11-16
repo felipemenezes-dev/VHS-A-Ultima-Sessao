@@ -7,10 +7,10 @@ Jogo de terror desenvolvido em C99 com Raylib, com código e interface em portug
 Na raiz do projeto, execute:
 
 ```sh
-make executar
+make run
 ```
 
-O comando `make run` também funciona. Para somente compilar, use:
+Para somente compilar, use:
 
 ```sh
 make
